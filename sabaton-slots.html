@@ -17,6 +17,7 @@
       --green:   #27c76e;
       --purple:  #9050cc;
       --blue:    #2e86c1;
+      --reel-trans: -450px;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -25,10 +26,10 @@
       background-image:
         url('menu-bg.jpg'),
         url('basegame-bg.jpg');
-      background-size: cover, cover; /* Beides auf cover stellen verhindert das Verzerren */
-      background-position: center top, center center; /* Richtet das obere Bild optimal aus */
+      background-size: cover, cover;
+      background-position: center top, center center;
       background-repeat: no-repeat;
-      background-attachment: fixed; /* Desktop: stabil beim Scrollen; auf iOS per @media überschrieben */
+      background-attachment: fixed;
       color: var(--text);
       font-family: 'Oswald', 'Impact', sans-serif;
       display: flex;
@@ -119,69 +120,55 @@
 
     .reel {
       width: 155px;
-      display: flex; 
-      flex-direction: column; 
-      gap: 0; 
+      height: 450px;
+      position: relative;
+      overflow: hidden;
       transition: filter 0.05s, transform 0.25s ease, box-shadow 0.25s ease;
       --reel-scale: 1;
       transform: scale(var(--reel-scale));
     }
 
-    .reel.spinning {
-      animation-name: reel-blur;
-      animation-timing-function: linear;
-      animation-iteration-count: infinite;
-      animation-duration: var(--spin-dur, 0.11s);
-      animation-delay: var(--spin-delay, 0s);
-      will-change: transform, filter, opacity;
+    .reel-strip {
+      display: flex;
+      flex-direction: column;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      will-change: transform;
     }
+
+    .reel-spinning {
+      animation: reelBlurLoop 0.12s linear infinite;
+    }
+
+    .reel-stopping {
+      animation: reelStopBounce 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.15) forwards;
+    }
+
+    @keyframes reelBlurLoop {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(var(--reel-trans)); }
+    }
+
+    @keyframes reelStopBounce {
+      0% { transform: translateY(-80px); }
+      100% { transform: translateY(0); }
+    }
+
     .reel.featured {
       --reel-scale: 1.04;
       box-shadow: 0 0 24px rgba(212,160,23,0.25);
     }
 
     @keyframes logoIntroMorph {
-      0% {
-        transform: scale(4); 
-        /* Hier ist das Logo anfangs riesig */
-      }
-      100% {
-        transform: scale(1); 
-        /* Hier ist es wieder auf normaler Größe */
-      }
+      0% { transform: scale(4); }
+      100% { transform: scale(1); }
     }
 
     .logo-intro-anim {
       animation: logoIntroMorph 2s ease-out forwards;
       transform-origin: center center; 
-    }
-
-    @keyframes reel-blur {
-      0% {
-        transform: scale(var(--reel-scale)) translateY(0) rotate(0deg);
-        filter: blur(calc(var(--spin-blur-min, 0) * 1px));
-        opacity: 1;
-      }
-      25% {
-        transform: scale(calc(var(--reel-scale) * 1.01)) translateY(calc(var(--spin-translate) * -0.6px)) rotate(calc(var(--spin-rot) * -0.4deg));
-        filter: blur(calc(var(--spin-blur-max, 6) * 1px));
-        opacity: 0.75;
-      }
-      50% {
-        transform: scale(calc(var(--reel-scale) * 1.02)) translateY(calc(var(--spin-translate) * 0.6px)) rotate(calc(var(--spin-rot) * 0.4deg));
-        filter: blur(calc(var(--spin-blur-max, 6) * 1px));
-        opacity: 0.6;
-      }
-      75% {
-        transform: scale(calc(var(--reel-scale) * 1.01)) translateY(calc(var(--spin-translate) * -0.25px)) rotate(calc(var(--spin-rot) * -0.15deg));
-        filter: blur(calc(var(--spin-blur-min, 0) * 1px));
-        opacity: 0.85;
-      }
-      100% {
-        transform: scale(var(--reel-scale)) translateY(0) rotate(0deg);
-        filter: blur(calc(var(--spin-blur-min, 0) * 1px));
-        opacity: 1;
-      }
     }
 
     .cell {
@@ -205,10 +192,7 @@
       pointer-events: none;
     }
 
-    .cell .sym-name {
-      display: none;
-    }
-
+    .cell .sym-name { display: none; }
     .cell.t-wild .sym-name    { color: #8a6a00; }
     .cell.t-premium .sym-name { color: #6a3a9a; }
     .cell.t-normal .sym-name  { color: #3a5a6a; }
@@ -224,35 +208,20 @@
       -webkit-user-drag: none;
       transition: transform 0.25s ease, filter 0.25s ease;
     }
-
-    .reel.spinning .cell img.sym {
-      animation-name: sym-drop;
-      animation-duration: var(--sym-dur, 0.45s);
-      animation-timing-function: cubic-bezier(0.2,0.8,0.2,1);
-      animation-iteration-count: infinite;
-      will-change: transform, filter;
-    }
-
-    @keyframes sym-drop {
-      0% {
-        transform: translateY(0) scale(1);
-        filter: blur(0);
-      }
-      60% {
-        transform: translateY(calc(var(--sym-translate, 18) * 1px)) scale(1.02);
-        filter: blur(calc(var(--sym-blur, 1.2) * 1px));
-      }
-      100% {
-        transform: translateY(0) scale(1);
-        filter: blur(0);
-      }
-    }
     
-    .cell.win img.sym { animation: symPop 0.55s ease-in-out infinite alternate; }
-    @keyframes symPop {
-      from { transform: scale(1); filter: drop-shadow(0 0 4px rgba(245,200,66,0.4)); }
-      to   { transform: scale(1.12); filter: drop-shadow(0 0 18px rgba(245,200,66,0.9)); }
+    .cell.win {
+      animation: winPulse 0.6s ease-in-out infinite alternate !important;
+      z-index: 5;
+      border: 2px solid var(--gold-lt) !important;
     }
+    .cell.win img.sym {
+      transform: scale(1.12);
+    }
+    @keyframes winPulse {
+      0% { background-color: rgba(212, 160, 23, 0.2); box-shadow: inset 0 0 15px rgba(212, 160, 23, 0.4); }
+      100% { background-color: rgba(212, 160, 23, 0.45); box-shadow: inset 0 0 30px rgba(212, 160, 23, 0.8), 0 0 15px var(--gold); }
+    }
+
     .cell.mega-symbol img.sym {
       animation: megaMerge 0.6s ease-out forwards;
       transform: scale(1.18);
@@ -272,7 +241,7 @@
       box-shadow: 0 0 38px rgba(245,200,66,0.7), inset 0 0 28px rgba(245,200,66,0.35);
       animation: megaOverlayIn 0.5s ease-out, megaOverlayPulse 1.2s ease-in-out infinite 0.5s;
     }
-    .mega-overlay img { width: 98%; height: 98%; object-fit: contain;
+    .mega-overlay img { width: 100%; height: 100%; object-fit: cover;
       filter: drop-shadow(0 0 24px rgba(245,200,66,0.95)) drop-shadow(0 4px 8px rgba(0,0,0,0.7)); }
     @keyframes megaOverlayIn {
       from { transform: scale(0.2) rotate(-8deg); opacity: 0; }
@@ -332,11 +301,6 @@
       color: #2ecc71;
       text-shadow: 0 0 16px rgba(46,204,113,0.7), 0 3px 0 #000;
       animation: wpAmountCount 0.6s ease-out 0.25s both;
-    }
-    .win-popup .wp-sub {
-      margin-top: 8px; font-family: 'Oswald',sans-serif; letter-spacing: 6px;
-      color: #c8d4de; font-size: 0.95rem; text-transform: uppercase;
-      display: none; 
     }
     .win-popup .wp-freespins {
       margin-top: 10px; font-family: 'Share Tech Mono', monospace;
@@ -405,11 +369,6 @@
     .bs-card .bs-close:hover { background: #d4a017; color: #000; }
     .reel { animation: reelPulse 10s ease-in-out infinite; }
 
-    @keyframes win-pulse {
-      0%,100% { border-color: var(--gold); box-shadow: 0 0 8px var(--gold),  inset 0 0 8px rgba(212,160,23,0.15); }
-      50%      { border-color: #fff8;      box-shadow: 0 0 24px var(--gold), inset 0 0 16px rgba(212,160,23,0.3); }
-    }
-
     @keyframes floatLogo {
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-8px); }
@@ -422,7 +381,6 @@
       0%,100% { filter: brightness(1); }
       50% { filter: brightness(1.06); }
     }
-    .cell.win { animation: win-pulse 0.45s ease-in-out infinite; }
 
     .payline-bar {
       height: 3px;
@@ -460,41 +418,17 @@
     }
 
     @keyframes payline-lightning {
-      0% {
-        stroke-dasharray: 100%;
-        stroke-dashoffset: 100%;
-        opacity: 0;
-      }
-      5% {
-        opacity: 0.8;
-      }
-      15% {
-        opacity: 1;
-      }
-      50% {
-        opacity: 1;
-        filter: drop-shadow(0 0 8px #f5c842) drop-shadow(0 0 16px rgba(245,200,66,0.8)) drop-shadow(0 0 24px rgba(245,200,66,0.5));
-      }
-      80% {
-        opacity: 0.8;
-      }
-      95% {
-        opacity: 0.3;
-      }
-      100% {
-        stroke-dasharray: 100%;
-        stroke-dashoffset: 0;
-        opacity: 0;
-      }
+      0% { stroke-dasharray: 100%; stroke-dashoffset: 100%; opacity: 0; }
+      5% { opacity: 0.8; }
+      15% { opacity: 1; }
+      50% { opacity: 1; filter: drop-shadow(0 0 8px #f5c842) drop-shadow(0 0 16px rgba(245,200,66,0.8)) drop-shadow(0 0 24px rgba(245,200,66,0.5)); }
+      80% { opacity: 0.8; }
+      95% { opacity: 0.3; }
+      100% { stroke-dasharray: 100%; stroke-dashoffset: 0; opacity: 0; }
     }
 
-    .payline-glow.animate {
-      animation: payline-lightning 1.0s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-    }
-
-    .payline-core.animate {
-      animation: payline-lightning 1.0s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-    }
+    .payline-glow.animate { animation: payline-lightning 1.0s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+    .payline-core.animate { animation: payline-lightning 1.0s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
 
     .dashboard {
       margin-top: 14px;
@@ -511,10 +445,7 @@
       text-align: center;
     }
     .stat-label { font-size: 0.68rem; color: #3a5060; letter-spacing: 2.5px; text-transform: uppercase; }
-    .stat-val {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 1.35rem; margin-top: 3px; color: var(--green);
-    }
+    .stat-val { font-family: 'Share Tech Mono', monospace; font-size: 1.35rem; margin-top: 3px; color: var(--green); }
     .stat-val.gold  { color: var(--gold); }
     .stat-val.white { color: #c8d4de; }
 
@@ -536,51 +467,30 @@
     }
 
     .ticker {
-      margin-top: 12px;
-      background: #04050a;
-      border: 1px solid #0e1820;
-      border-radius: 3px;
-      padding: 11px 18px;
-      text-align: center;
-      font-size: 1rem; letter-spacing: 1.5px;
-      color: var(--gold); text-transform: uppercase;
-      min-height: 44px;
+      margin-top: 12px; background: #04050a; border: 1px solid #0e1820; border-radius: 3px;
+      padding: 11px 18px; text-align: center; font-size: 1rem; letter-spacing: 1.5px;
+      color: var(--gold); text-transform: uppercase; min-height: 44px;
     }
 
-    @keyframes ticker-flash {
-      0%,100% { background: #04050a; }
-      50%      { background: #100c00; }
-    }
+    @keyframes ticker-flash { 0%,100% { background: #04050a; } 50% { background: #100c00; } }
     .ticker.flash { animation: ticker-flash 0.4s infinite; }
 
     .paytable {
-      margin-top: 10px;
-      background: #04050a;
-      border: 1px solid #0e1820;
-      border-radius: 3px;
-      padding: 10px 16px;
-      display: flex; flex-wrap: wrap; gap: 10px 20px; justify-content: center;
+      margin-top: 10px; background: #04050a; border: 1px solid #0e1820; border-radius: 3px;
+      padding: 10px 16px; display: flex; flex-wrap: wrap; gap: 10px 20px; justify-content: center;
     }
-    .pay-row {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 0.73rem; color: #4a6070;
-      display: flex; align-items: center; gap: 6px;
-    }
+    .pay-row { font-family: 'Share Tech Mono', monospace; font-size: 0.73rem; color: #4a6070; display: flex; align-items: center; gap: 6px; }
     .pay-row .ph { color: var(--gold); font-weight: 700; }
 
     .music-bar {
-      margin-top: 10px; background: #04050a;
-      border: 1px solid #0e1820; border-radius: 3px;
-      padding: 9px 14px;
-      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-      font-size: 0.8rem; color: #4a6070;
+      margin-top: 10px; background: #04050a; border: 1px solid #0e1820; border-radius: 3px;
+      padding: 9px 14px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 0.8rem; color: #4a6070;
     }
     .music-bar .lbl { white-space: nowrap; font-family: 'Oswald', sans-serif; letter-spacing: 1px; }
     .btn-music {
       background: #10181f; border: 1px solid #1e2a35; color: var(--gold);
       padding: 4px 14px; border-radius: 3px; cursor: pointer;
-      font-family: 'Oswald', sans-serif; font-weight: 700; letter-spacing: 1px;
-      white-space: nowrap;
+      font-family: 'Oswald', sans-serif; font-weight: 700; letter-spacing: 1px; white-space: nowrap;
     }
     .btn-music:hover { background: var(--gold); color: #000; }
     #music-info { flex: 1; min-width: 140px; color: #3a5060; font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; }
@@ -619,19 +529,11 @@
       animation: lastStandFire 0.35s ease-in-out infinite !important;
     }
     @keyframes lastStandFire {
-      0%,100% {
-        box-shadow: 0 0 22px rgba(231,76,60,0.55), inset 0 0 12px rgba(231,76,60,0.22);
-        transform: scale(1);
-      }
-      50% {
-        box-shadow: 0 0 48px rgba(255,140,0,0.9), 0 0 80px rgba(231,76,60,0.45), inset 0 0 20px rgba(255,140,0,0.3);
-        transform: scale(1.01);
-      }
+      0%,100% { box-shadow: 0 0 22px rgba(231,76,60,0.55), inset 0 0 12px rgba(231,76,60,0.22); transform: scale(1); }
+      50% { box-shadow: 0 0 48px rgba(255,140,0,0.9), 0 0 80px rgba(231,76,60,0.45), inset 0 0 20px rgba(255,140,0,0.3); transform: scale(1.01); }
     }
 
-    .reel.battalion {
-      animation: battalionPulse 0.7s ease-in-out infinite !important;
-    }
+    .reel.battalion { animation: battalionPulse 0.7s ease-in-out infinite !important; }
     @keyframes battalionPulse {
       0%,100% { box-shadow: 0 0 12px rgba(39,199,110,0.3); border-color: #27c76e; }
       50%      { box-shadow: 0 0 28px rgba(39,199,110,0.7); border-color: #a0ffc8; }
@@ -642,36 +544,15 @@
       background: #000 !important;
       animation: none !important;
     }
-    .cell.mega-symbol img.sym {
-      opacity: 0 !important;
-    }
-    .cell.mega-symbol.win {
-      border-color: #d4a017 !important;
-      animation: megaSymbolGlow 0.5s ease-in-out infinite !important;
-    }
-    .cell.mega-symbol.win img.sym {
-      opacity: 1 !important;
-    }
-    @keyframes megaSymbolGlow {
-      0%,100% { box-shadow: 0 0 12px rgba(212,160,23,0.4); }
-      50%      { box-shadow: 0 0 28px rgba(212,160,23,0.9); }
-    }
+    .cell.mega-symbol img.sym { opacity: 0 !important; }
+    .cell.mega-symbol.win { border-color: #d4a017 !important; animation: megaSymbolGlow 0.5s ease-in-out infinite !important; }
+    .cell.mega-symbol.win img.sym { opacity: 1 !important; }
+    @keyframes megaSymbolGlow { 0%,100% { box-shadow: 0 0 12px rgba(212,160,23,0.4); } 50% { box-shadow: 0 0 28px rgba(212,160,23,0.9); } }
 
-    .cell.t-scatter {
-      animation: scatterPulse 1s ease-in-out infinite;
-    }
-    @keyframes scatterPulse {
-      0%,100% { border-color: #c8900a; box-shadow: 0 0 8px rgba(212,160,23,0.3); }
-      50%      { border-color: #f5c842; box-shadow: 0 0 20px rgba(245,200,66,0.6); }
-    }
-    .cell.scatter-buildup {
-      animation: scatterBuildup 0.4s ease-in-out infinite !important;
-      z-index: 5;
-    }
-    .cell.scatter-transform {
-      animation: scatterTransformFlash 0.18s ease-in-out 2 !important;
-      z-index: 6;
-    }
+    .cell.t-scatter { animation: scatterPulse 1s ease-in-out infinite; }
+    @keyframes scatterPulse { 0%,100% { border-color: #c8900a; box-shadow: 0 0 8px rgba(212,160,23,0.3); } 50% { border-color: #f5c842; box-shadow: 0 0 20px rgba(245,200,66,0.6); } }
+    .cell.scatter-buildup { animation: scatterBuildup 0.4s ease-in-out infinite !important; z-index: 5; }
+    .cell.scatter-transform { animation: scatterTransformFlash 0.18s ease-in-out 2 !important; z-index: 6; }
     @keyframes scatterTransformFlash {
       0%   { transform: scale(1); filter: brightness(1); box-shadow: 0 0 12px rgba(255,220,0,0.35); }
       50%  { transform: scale(1.08); filter: brightness(1.25); box-shadow: 0 0 30px rgba(255,255,255,0.75), 0 0 45px rgba(255,180,0,0.65); }
@@ -690,410 +571,180 @@
       opacity: 0; transition: opacity 0.3s;
     }
     #scatter-counter-overlay.show { opacity: 1; }
-    .sco-inner {
-      display: flex; flex-direction: column; align-items: center;
-      font-family: 'Oswald', Impact, sans-serif; text-transform: uppercase;
-      animation: scoIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
-    }
+    .sco-inner { display: flex; flex-direction: column; align-items: center; font-family: 'Oswald', Impact, sans-serif; text-transform: uppercase; animation: scoIn 0.4s cubic-bezier(0.34,1.56,0.64,1); }
     .sco-count {
       font-size: 9rem; font-weight: 900; line-height: 1;
-      background: linear-gradient(180deg,#fff 0%,#ffdd00 40%,#ff9900 100%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      filter: drop-shadow(0 0 40px #ffaa00) drop-shadow(0 4px 0 #000);
-      animation: scoCountPulse 0.4s ease-in-out infinite;
+      background: linear-gradient(180deg,#fff 0%,#ffdd00 40%,#ff9900 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 40px #ffaa00) drop-shadow(0 4px 0 #000); animation: scoCountPulse 0.4s ease-in-out infinite;
     }
     .sco-slash { font-size: 4rem; color: #f5c842; letter-spacing: 4px; opacity: 0.7; }
     .sco-label { font-size: 1.6rem; letter-spacing: 12px; color: #c8d4de; margin-top: -4px; }
-    @keyframes scoIn {
-      from { transform: scale(0.3) translateY(40px); opacity: 0; }
-      to   { transform: scale(1) translateY(0); opacity: 1; }
-    }
-    @keyframes scoCountPulse {
-      0%,100% { filter: drop-shadow(0 0 30px #ffaa00); }
-      50%      { filter: drop-shadow(0 0 70px #ffe000) drop-shadow(0 0 120px #ff7700); }
-    }
+    @keyframes scoIn { from { transform: scale(0.3) translateY(40px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
+    @keyframes scoCountPulse { 0%,100% { filter: drop-shadow(0 0 30px #ffaa00); } 50% { filter: drop-shadow(0 0 70px #ffe000) drop-shadow(0 0 120px #ff7700); } }
 
     #battalion-confirm {
-      position: fixed; inset: 0;
-      display: flex; align-items: center; justify-content: center;
-      background: rgba(0,0,0,0.65); z-index: 210; padding: 18px;
-      animation: battalionConfirmIn 0.25s ease-out;
+      position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.65); z-index: 210; padding: 18px; animation: battalionConfirmIn 0.25s ease-out;
     }
     #battalion-confirm.hidden { display: none; }
     .battalion-confirm-card {
-      width: min(420px, 92vw); border: 2px solid #d4a017;
-      border-radius: 18px; background: linear-gradient(180deg, #161d24 0%, #0b1218 100%);
-      box-shadow: 0 0 36px rgba(212,160,23,0.35), 0 0 80px rgba(255,180,0,0.18);
-      color: #f5f7fa; text-align: center; padding: 18px 18px 14px;
+      width: min(420px, 92vw); border: 2px solid #d4a017; border-radius: 18px; background: linear-gradient(180deg, #161d24 0%, #0b1218 100%);
+      box-shadow: 0 0 36px rgba(212,160,23,0.35), 0 0 80px rgba(255,180,0,0.18); color: #f5f7fa; text-align: center; padding: 18px 18px 14px;
       animation: battalionCardPulse 0.8s ease-in-out infinite alternate;
     }
-    .battalion-confirm-card h3 {
-      margin: 0 0 8px; font-family: 'Oswald', Impact, sans-serif; letter-spacing: 3px; text-transform: uppercase; color: #ffd86b;
-      font-size: 1.2rem;
-    }
+    .battalion-confirm-card h3 { margin: 0 0 8px; font-family: 'Oswald', Impact, sans-serif; letter-spacing: 3px; text-transform: uppercase; color: #ffd86b; font-size: 1.2rem; }
     .battalion-confirm-card p { margin: 0 0 10px; color: #dbe5ee; font-size: 0.95rem; line-height: 1.35; }
     .battalion-symbol-preview {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 88px; height: 88px; margin: 6px auto 10px; border-radius: 16px;
-      background: radial-gradient(circle at top, #273440 0%, #121a22 70%);
-      border: 2px solid #ffd86b; box-shadow: 0 0 24px rgba(255,220,0,0.35);
+      display: inline-flex; align-items: center; justify-content: center; width: 88px; height: 88px; margin: 6px auto 10px; border-radius: 16px;
+      background: radial-gradient(circle at top, #273440 0%, #121a22 70%); border: 2px solid #ffd86b; box-shadow: 0 0 24px rgba(255,220,0,0.35);
       animation: battalionSymbolPulse 0.6s ease-in-out infinite alternate;
     }
     .battalion-symbol-preview img { width: 56px; height: 56px; object-fit: contain; filter: drop-shadow(0 0 10px rgba(255,220,0,0.35)); }
     .battalion-confirm-btn {
-      margin-top: 4px; border: none; border-radius: 999px; padding: 10px 18px;
-      font-family: 'Oswald', Impact, sans-serif; text-transform: uppercase; letter-spacing: 2px;
-      background: linear-gradient(135deg, #ffd86b 0%, #d4a017 100%); color: #111; font-weight: 800; cursor: pointer;
-      box-shadow: 0 8px 18px rgba(212,160,23,0.35);
+      margin-top: 4px; border: none; border-radius: 999px; padding: 10px 18px; font-family: 'Oswald', Impact, sans-serif; text-transform: uppercase; letter-spacing: 2px;
+      background: linear-gradient(135deg, #ffd86b 0%, #d4a017 100%); color: #111; font-weight: 800; cursor: pointer; box-shadow: 0 8px 18px rgba(212,160,23,0.35);
     }
     .battalion-confirm-btn:hover { transform: translateY(-1px); }
     @keyframes battalionConfirmIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes battalionCardPulse { from { transform: translateY(0); } to { transform: translateY(-2px); } }
     @keyframes battalionSymbolPulse { from { transform: scale(1); } to { transform: scale(1.05); } }
 
-    #battalion-banner {
-      position: fixed; inset: 0; z-index: 100;
-      display: flex; align-items: center; justify-content: center;
-      pointer-events: none; opacity: 0;
-      transition: opacity 0.3s;
-    }
+    #battalion-banner { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; pointer-events: none; opacity: 0; transition: opacity 0.3s; }
     #battalion-banner.show { opacity: 1; pointer-events: auto; }
     #battalion-banner .banner-text {
-      font-family: 'Oswald', Impact, sans-serif;
-      font-size: 4rem; font-weight: 900; letter-spacing: 8px;
-      color: #f5c842; text-transform: uppercase;
-      text-shadow: 0 0 40px #d4a017, 0 0 80px #d4a017, 0 4px 0 #000;
-      animation: bannerZoom 0.5s ease-out forwards;
+      font-family: 'Oswald', Impact, sans-serif; font-size: 4rem; font-weight: 900; letter-spacing: 8px; color: #f5c842; text-transform: uppercase;
+      text-shadow: 0 0 40px #d4a017, 0 0 80px #d4a017, 0 4px 0 #000; animation: bannerZoom 0.5s ease-out forwards;
     }
-    @keyframes bannerZoom {
-      from { transform: scale(0.3); opacity: 0; }
-      to   { transform: scale(1);   opacity: 1; }
-    }
+    @keyframes bannerZoom { from { transform: scale(0.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
     .feature-pill {
-      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
-      background: #d4a017; color: #000; font-size: 0.55rem;
-      font-family: 'Oswald', sans-serif; font-weight: 900;
-      letter-spacing: 2px; padding: 2px 8px; border-radius: 10px;
-      white-space: nowrap; z-index: 10;
+      position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #d4a017; color: #000; font-size: 0.55rem;
+      font-family: 'Oswald', sans-serif; font-weight: 900; letter-spacing: 2px; padding: 2px 8px; border-radius: 10px; white-space: nowrap; z-index: 10;
       animation: pillPop 0.3s ease-out forwards;
     }
-    @keyframes pillPop {
-      from { transform: translateX(-50%) scale(0); opacity: 0; }
-      to   { transform: translateX(-50%) scale(1); opacity: 1; }
-    }
+    @keyframes pillPop { from { transform: translateX(-50%) scale(0); opacity: 0; } to { transform: translateX(-50%) scale(1); opacity: 1; } }
 
     .reels-wrap { position: relative; }
 
     #freespin-badge {
-      display: none;
-      position: absolute; top: -14px; right: -14px;
-      background: #27c76e; color: #000; border-radius: 50%;
-      width: 32px; height: 32px;
-      font-family: 'Oswald', sans-serif; font-weight: 900;
-      font-size: 1rem; line-height: 32px; text-align: center;
-      box-shadow: 0 0 12px rgba(39,199,110,0.7);
-      animation: spinBadge 1s ease-in-out infinite;
-      z-index: 5;
+      display: none; position: absolute; top: -14px; right: -14px; background: #27c76e; color: #000; border-radius: 50%; width: 32px; height: 32px;
+      font-family: 'Oswald', sans-serif; font-weight: 900; font-size: 1rem; line-height: 32px; text-align: center; box-shadow: 0 0 12px rgba(39,199,110,0.7);
+      animation: spinBadge 1s ease-in-out infinite; z-index: 5;
     }
-    @keyframes spinBadge {
-      0%,100% { transform: scale(1); }
-      50%      { transform: scale(1.2); }
-    }
+    @keyframes spinBadge { 0%,100% { transform: scale(1); } 50% { transform: scale(1.2); } }
 
-    .tension-bar {
-      margin-top: 6px; background: #04050a;
-      border: 1px solid #0e1820; border-radius: 3px;
-      padding: 9px 16px;
-      display: flex; align-items: center; gap: 11px;
-    }
-    .tension-bar .t-lbl {
-      font-family: 'Oswald', sans-serif; letter-spacing: 1.5px;
-      font-size: 0.76rem; color: #4a6070; white-space: nowrap; flex-shrink: 0;
-    }
+    .tension-bar { margin-top: 6px; background: #04050a; border: 1px solid #0e1820; border-radius: 3px; padding: 9px 16px; display: flex; align-items: center; gap: 11px; }
+    .tension-bar .t-lbl { font-family: 'Oswald', sans-serif; letter-spacing: 1.5px; font-size: 0.76rem; color: #4a6070; white-space: nowrap; flex-shrink: 0; }
     .tension-lamps { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
-    .tension-lamp {
-      width: 14px; height: 14px; border-radius: 50%;
-      border: 1px solid #1a2530; background: #0c1014;
-      transition: background 0.45s ease, box-shadow 0.45s ease;
-      flex-shrink: 0;
-    }
+    .tension-lamp { width: 14px; height: 14px; border-radius: 50%; border: 1px solid #1a2530; background: #0c1014; transition: background 0.45s ease, box-shadow 0.45s ease; flex-shrink: 0; }
     .tension-lamp.active { border-color: transparent; }
-    .tension-track {
-      flex: 1; height: 7px; background: #060809;
-      border-radius: 4px; overflow: hidden;
-      border: 1px solid #1a2530; min-width: 60px;
-    }
-    .tension-fill {
-      height: 100%; width: 0%; border-radius: 4px; background: #2e86c1;
-      transition: width 0.65s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.55s ease;
-    }
-    #tension-label {
-      font-family: 'Share Tech Mono', monospace; font-weight: 700;
-      font-size: 0.76rem; color: #2e86c1; white-space: nowrap;
-      min-width: 72px; text-align: right; letter-spacing: 1px;
-      transition: color 0.45s ease;
-    }
+    .tension-track { flex: 1; height: 7px; background: #060809; border-radius: 4px; overflow: hidden; border: 1px solid #1a2530; min-width: 60px; }
+    .tension-fill { height: 100%; width: 0%; border-radius: 4px; background: #2e86c1; transition: width 0.65s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.55s ease; }
+    #tension-label { font-family: 'Share Tech Mono', monospace; font-weight: 700; font-size: 0.76rem; color: #2e86c1; white-space: nowrap; min-width: 72px; text-align: right; letter-spacing: 1px; transition: color 0.45s ease; }
 
     /* ── AUTOPLAY MODAL ── */
-    #autoplay-modal {
-      position: fixed; inset: 0; z-index: 300;
-      display: flex; align-items: center; justify-content: center;
-      background: rgba(0,0,0,0.75);
-      animation: apModalIn 0.2s ease-out;
-    }
+    #autoplay-modal { position: fixed; inset: 0; z-index: 300; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.75); animation: apModalIn 0.2s ease-out; }
     #autoplay-modal.hidden { display: none; }
-    @keyframes apModalIn {
-      from { opacity: 0; }
-      to   { opacity: 1; }
-    }
-    .ap-card {
-      background: linear-gradient(180deg, #161d24 0%, #0b1218 100%);
-      border: 2px solid var(--gold);
-      border-radius: 10px;
-      padding: 28px 32px 22px;
-      width: min(440px, 94vw);
-      box-shadow: 0 0 48px rgba(212,160,23,0.3), 0 0 100px rgba(0,0,0,0.8);
-      color: var(--text);
-      font-family: 'Oswald', sans-serif;
-    }
-    .ap-card h2 {
-      color: var(--gold); font-size: 1.3rem; letter-spacing: 5px;
-      text-transform: uppercase; text-align: center; margin-bottom: 22px;
-      text-shadow: 0 0 16px rgba(212,160,23,0.5);
-    }
-    .ap-row {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 14px; gap: 10px;
-    }
-    .ap-row label {
-      font-size: 0.82rem; letter-spacing: 2px; color: #8aacba;
-      text-transform: uppercase; flex: 1;
-    }
-    .ap-row select, .ap-row input[type=number] {
-      background: #060a0e; border: 1px solid #1e2a35; color: #e0e6ed;
-      padding: 6px 10px; border-radius: 4px;
-      font-family: 'Share Tech Mono', monospace; font-size: 0.88rem;
-      min-width: 110px; text-align: right;
-    }
-    .ap-row input[type=checkbox] {
-      width: 18px; height: 18px; accent-color: var(--gold); cursor: pointer;
-    }
-    .ap-divider {
-      border: none; border-top: 1px solid #1e2a35; margin: 18px 0;
-    }
-    .ap-section-title {
-      font-size: 0.72rem; letter-spacing: 3px; color: #4a6070;
-      text-transform: uppercase; margin-bottom: 12px; margin-top: 4px;
-    }
-    .ap-actions {
-      display: flex; gap: 10px; margin-top: 20px;
-    }
-    .ap-btn {
-      flex: 1; padding: 11px; border-radius: 4px; cursor: pointer;
-      font-family: 'Oswald', sans-serif; font-weight: 700;
-      font-size: 1rem; letter-spacing: 3px; text-transform: uppercase;
-      border: none; transition: filter 0.15s;
-    }
+    @keyframes apModalIn { from { opacity: 0; } to { opacity: 1; } }
+    .ap-card { background: linear-gradient(180deg, #161d24 0%, #0b1218 100%); border: 2px solid var(--gold); border-radius: 10px; padding: 28px 32px 22px; width: min(440px, 94vw); box-shadow: 0 0 48px rgba(212,160,23,0.3), 0 0 100px rgba(0,0,0,0.8); color: var(--text); font-family: 'Oswald', sans-serif; }
+    .ap-card h2 { color: var(--gold); font-size: 1.3rem; letter-spacing: 5px; text-transform: uppercase; text-align: center; margin-bottom: 22px; text-shadow: 0 0 16px rgba(212,160,23,0.5); }
+    .ap-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 10px; }
+    .ap-row label { font-size: 0.82rem; letter-spacing: 2px; color: #8aacba; text-transform: uppercase; flex: 1; }
+    .ap-row select, .ap-row input[type=number] { background: #060a0e; border: 1px solid #1e2a35; color: #e0e6ed; padding: 6px 10px; border-radius: 4px; font-family: 'Share Tech Mono', monospace; font-size: 0.88rem; min-width: 110px; text-align: right; }
+    .ap-row input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--gold); cursor: pointer; }
+    .ap-divider { border: none; border-top: 1px solid #1e2a35; margin: 18px 0; }
+    .ap-section-title { font-size: 0.72rem; letter-spacing: 3px; color: #4a6070; text-transform: uppercase; margin-bottom: 12px; margin-top: 4px; }
+    .ap-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .ap-btn { flex: 1; padding: 11px; border-radius: 4px; cursor: pointer; font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 1rem; letter-spacing: 3px; text-transform: uppercase; border: none; transition: filter 0.15s; }
     .ap-btn:hover { filter: brightness(1.15); }
     .ap-btn-start { background: var(--gold); color: #000; }
     .ap-btn-cancel { background: #1e2a35; color: #8aacba; border: 1px solid #2a3a4a; }
 
     /* ── WIN CONFIRM MODAL ── */
-    #win-confirm-modal {
-      position: fixed; inset: 0; z-index: 250;
-      display: flex; align-items: center; justify-content: center;
-      background: rgba(0,0,0,0.82);
-      animation: apModalIn 0.2s ease-out;
-    }
+    #win-confirm-modal { position: fixed; inset: 0; z-index: 250; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.82); animation: apModalIn 0.2s ease-out; }
     #win-confirm-modal.hidden { display: none; }
-    .wc-card {
-      background: linear-gradient(180deg, #1a1408 0%, #0a0604 100%);
-      border: 2px solid var(--gold);
-      border-radius: 12px;
-      padding: 32px 40px 26px;
-      width: min(400px, 92vw);
-      text-align: center;
-      box-shadow: 0 0 56px rgba(212,160,23,0.45), 0 0 120px rgba(0,0,0,0.9);
-      animation: bsIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
-    }
-    .wc-tier-label {
-      font-family: 'Oswald', Impact, sans-serif;
-      font-size: 2.2rem; font-weight: 900; letter-spacing: 8px;
-      text-transform: uppercase;
-      background: linear-gradient(180deg, #fff8c0 0%, #f5c842 40%, #d4a017 100%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      filter: drop-shadow(0 0 18px #d4a017);
-      margin-bottom: 6px;
-    }
+    .wc-card { background: linear-gradient(180deg, #1a1408 0%, #0a0604 100%); border: 2px solid var(--gold); border-radius: 12px; padding: 32px 40px 26px; width: min(400px, 92vw); text-align: center; box-shadow: 0 0 56px rgba(212,160,23,0.45), 0 0 120px rgba(0,0,0,0.9); animation: bsIn 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+    .wc-tier-label { font-family: 'Oswald', Impact, sans-serif; font-size: 2.2rem; font-weight: 900; letter-spacing: 8px; text-transform: uppercase; background: linear-gradient(180deg, #fff8c0 0%, #f5c842 40%, #d4a017 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 18px #d4a017); margin-bottom: 6px; }
     .wc-tier-label.tier-mega   { background: linear-gradient(180deg,#fff,#9050cc 50%,#3a1060); -webkit-background-clip:text;-webkit-text-fill-color:transparent; filter: drop-shadow(0 0 20px #9050cc); }
     .wc-tier-label.tier-epic   { background: linear-gradient(180deg,#fff,#e74c3c 50%,#5a0a0a); -webkit-background-clip:text;-webkit-text-fill-color:transparent; filter: drop-shadow(0 0 22px #e74c3c); }
     .wc-tier-label.tier-jackpot { background: linear-gradient(180deg,#fff,#f5c842 30%,#e74c3c 70%,#9050cc); -webkit-background-clip:text;-webkit-text-fill-color:transparent; filter: drop-shadow(0 0 28px #f5c842); }
-    .wc-amount {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 2.8rem; font-weight: 700; color: #2ecc71;
-      text-shadow: 0 0 18px rgba(46,204,113,0.7); margin: 10px 0 6px;
-    }
-    .wc-mult {
-      font-size: 0.9rem; letter-spacing: 4px; color: #8aacba;
-      text-transform: uppercase; margin-bottom: 22px;
-    }
-    .wc-question {
-      font-family: 'Oswald', sans-serif; font-size: 0.9rem;
-      letter-spacing: 3px; color: #c8d4de; text-transform: uppercase;
-      margin-bottom: 18px;
-    }
+    .wc-amount { font-family: 'Share Tech Mono', monospace; font-size: 2.8rem; font-weight: 700; color: #2ecc71; text-shadow: 0 0 18px rgba(46,204,113,0.7); margin: 10px 0 6px; }
+    .wc-mult { font-size: 0.9rem; letter-spacing: 4px; color: #8aacba; text-transform: uppercase; margin-bottom: 22px; }
+    .wc-question { font-family: 'Oswald', sans-serif; font-size: 0.9rem; letter-spacing: 3px; color: #c8d4de; text-transform: uppercase; margin-bottom: 18px; }
     .wc-actions { display: flex; gap: 10px; }
-    .wc-btn {
-      flex: 1; padding: 12px; border-radius: 4px; cursor: pointer;
-      font-family: 'Oswald', sans-serif; font-weight: 700;
-      font-size: 1rem; letter-spacing: 3px; text-transform: uppercase;
-      border: none; transition: filter 0.15s;
-    }
+    .wc-btn { flex: 1; padding: 12px; border-radius: 4px; cursor: pointer; font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 1rem; letter-spacing: 3px; text-transform: uppercase; border: none; transition: filter 0.15s; }
     .wc-btn:hover { filter: brightness(1.15); }
     .wc-btn-continue { background: var(--gold); color: #000; }
     .wc-btn-stop     { background: #1e2a35; color: #e74c3c; border: 1px solid #e74c3c; }
 
     /* ══════════════════════════════════════════════════
-       MOBILE RESPONSIVE — Smartphone-Optimierungen
+       MOBILE RESPONSIVE
        ══════════════════════════════════════════════════ */
-
-    /* Tablets (≤ 900px) */
     @media (max-width: 900px) {
+      :root { --reel-trans: -378px; }
       .machine { padding: 12px; }
-      .reel { width: 130px; }
+      .reel { width: 130px; height: 378px; }
       .cell { width: 126px; height: 126px; }
     }
 
-    /* Große Smartphones / kleine Tablets (≤ 640px) */
     @media (max-width: 640px) {
-      body {
-        padding: 8px;
-        gap: 8px;
-        /* iOS Safari: fixed background oft buggy — scroll stattdessen */
-        background-attachment: scroll;
-      }
-
-      /* Logo kleiner */
+      :root { --reel-trans: calc(((100vw - 64px) / 5) * -3); }
+      body { padding: 8px; gap: 8px; background-attachment: scroll; }
       .logo-wrap { margin-bottom: 0; }
       .logo-img { width: min(320px, 88%); }
       .logo-sub { font-size: 0.65rem; letter-spacing: 3px; }
-
-      /* Machine: weniger Abstand nach oben */
-      .machine {
-        margin-top: 60px;
-        padding: 10px 8px;
-      }
-
-      /* Reels skalieren mit Viewport */
+      .machine { margin-top: 60px; padding: 10px 8px; }
       .reels-wrap { gap: 0; padding: 8px; }
-      .reel { width: calc((100vw - 64px) / 5); min-width: 50px; }
-      .cell {
-        width: calc((100vw - 64px) / 5);
-        height: calc((100vw - 64px) / 5);
-        min-width: 50px;
-        min-height: 50px;
-        border-width: 1px;
-        border-radius: 3px;
-      }
-
-      /* Dashboard: 3-2 Layout statt 6 Spalten */
-      .dashboard {
-        grid-template-columns: repeat(3, 1fr);
-        grid-template-rows: auto auto;
-        gap: 6px;
-      }
-      /* Spin-Wrap über volle Breite in zweiter Reihe */
-      .spin-wrap {
-        grid-column: 1 / -1;
-        gap: 8px;
-      }
-      .btn-spin {
-        font-size: 1.4rem;
-        padding: 14px 16px;
-        min-height: 56px;
-        letter-spacing: 3px;
-      }
-      #btn-auto {
-        min-height: 56px !important;
-        padding: 12px 16px !important;
-        font-size: 1rem !important;
-      }
-
+      .reel { width: calc((100vw - 64px) / 5); height: calc(((100vw - 64px) / 5) * 3); min-width: 50px; }
+      .cell { width: calc((100vw - 64px) / 5); height: calc((100vw - 64px) / 5); min-width: 50px; min-height: 50px; border-width: 1px; border-radius: 3px; }
+      .dashboard { grid-template-columns: repeat(3, 1fr); grid-template-rows: auto auto; gap: 6px; }
+      .spin-wrap { grid-column: 1 / -1; gap: 8px; }
+      .btn-spin { font-size: 1.4rem; padding: 14px 16px; min-height: 56px; letter-spacing: 3px; }
+      #btn-auto { min-height: 56px !important; padding: 12px 16px !important; font-size: 1rem !important; }
       .stat { padding: 8px 6px; }
       .stat-label { font-size: 0.6rem; letter-spacing: 1.5px; }
       .stat-val { font-size: 1.1rem; }
-
-      /* Ticker */
       .ticker { font-size: 0.82rem; padding: 9px 12px; letter-spacing: 1px; }
-
-      /* Auszahlungstabelle: kompakter */
       .paytable { gap: 7px 12px; padding: 8px 10px; }
       .pay-row { font-size: 0.66rem; gap: 4px; }
-
-      /* Musik-Bar */
       .music-bar { gap: 8px; padding: 7px 10px; font-size: 0.74rem; }
       #vol-slider { width: 55px; }
-
-      /* Tension Bar */
       .tension-bar { padding: 7px 10px; gap: 8px; }
       .tension-lamp { width: 11px; height: 11px; }
-
-      /* Admin-Leiste */
       .admin { gap: 8px; padding: 8px 10px; font-size: 0.78rem; }
-
-      /* Win-Popup Schriftgrößen verkleinern */
       .win-popup .wp-title { font-size: 3.2rem !important; letter-spacing: 6px; }
       .win-popup.tier-mega .wp-title  { font-size: 3.6rem !important; }
       .win-popup.tier-epic .wp-title  { font-size: 4rem !important; }
       .win-popup.tier-jackpot .wp-title { font-size: 4.4rem !important; letter-spacing: 8px; }
       .win-popup .wp-amount { font-size: 2rem; }
-
-      /* Battalion Summary Card */
       .bs-card { padding: 26px 22px; }
       .bs-card h2 { font-size: 1.6rem; letter-spacing: 5px; }
       .bs-card .bs-amount { font-size: 2.6rem; }
-
-      /* Scatter Counter */
       .sco-count { font-size: 6rem; }
       .sco-label { font-size: 1.1rem; letter-spacing: 8px; }
-
-      /* Modals */
       .ap-card { padding: 20px 16px 16px; }
       .wc-card { padding: 24px 20px 20px; }
       .wc-amount { font-size: 2rem; }
       .wc-tier-label { font-size: 1.7rem; letter-spacing: 5px; }
-
-      /* Battalion Confirm */
       .battalion-confirm-card { padding: 16px 14px 12px; }
-
-      /* Banner-Text */
       #battalion-banner .banner-text { font-size: 2.4rem; letter-spacing: 5px; }
-
-      /* Freespin-Badge */
       #freespin-badge { top: -10px; right: -10px; width: 26px; height: 26px; font-size: 0.82rem; line-height: 26px; }
     }
 
-    /* Sehr kleine Smartphones (≤ 380px, z.B. iPhone SE) */
     @media (max-width: 380px) {
+      :root { --reel-trans: calc(((100vw - 52px) / 5) * -3); }
       .machine { margin-top: 44px; padding: 8px 6px; }
-      .reel { width: calc((100vw - 52px) / 5); }
-      .cell {
-        width: calc((100vw - 52px) / 5);
-        height: calc((100vw - 52px) / 5);
-      }
+      .reel { width: calc((100vw - 52px) / 5); height: calc(((100vw - 52px) / 5) * 3); }
+      .cell { width: calc((100vw - 52px) / 5); height: calc((100vw - 52px) / 5); }
       .win-popup .wp-title { font-size: 2.6rem !important; }
       .win-popup .wp-amount { font-size: 1.6rem; }
       .logo-img { width: min(260px, 88%); }
     }
 
-    /* Touch-Geräte: hover-Effekte deaktivieren für besseres Feeling */
     @media (hover: none) and (pointer: coarse) {
       .btn-spin:hover { transform: none; }
       .admin button:hover { background: #1e2a35; color: var(--gold); }
       .btn-music:hover { background: #10181f; color: var(--gold); }
       .bs-card .bs-close:hover { background: #1e2a35; color: #d4a017; }
-      /* Größere Touch-Targets für alle Buttons */
       .btn-spin { min-height: 56px; touch-action: manipulation; }
       #btn-auto { touch-action: manipulation; }
       .ap-btn, .wc-btn, .bs-card .bs-close { min-height: 48px; touch-action: manipulation; }
@@ -1171,7 +822,6 @@
     <div class="pay-row">🎤 5×JOAKIM <span class="ph">×14</span></div>
     <div class="pay-row">🎸 5×CHRIS <span class="ph">×14</span></div>
     <div class="pay-row">🎸 5×TOMMY <span class="ph">×14</span></div>
-    
     <div class="pay-row">⛑ 5×HELM <span class="ph">×2</span></div>
     <div class="pay-row">🎖 5×MEDAILLE <span class="ph">×2</span></div>
     <div class="pay-row">🛡 5×SCHILD <span class="ph">×1.2</span></div>
@@ -1186,7 +836,6 @@
   </div>
 </div>
 
-<!-- AUTOPLAY MODAL -->
 <div id="autoplay-modal" class="hidden">
   <div class="ap-card">
     <h2>⚙ Autoplay</h2>
@@ -1248,7 +897,6 @@
   </div>
 </div>
 
-<!-- WIN CONFIRM MODAL -->
 <div id="win-confirm-modal" class="hidden">
   <div class="wc-card">
     <div class="wc-tier-label" id="wc-tier-label">BIG WIN</div>
@@ -1295,17 +943,12 @@
 <audio id="bg-audio"></audio>
 
 <script>
-
-// ═══════════════════════════════════════════════════════════════════════════
-// ① SVG SYMBOL DEFINITIONEN
-// ═══════════════════════════════════════════════════════════════════════════
-
 const SYM = {
   wild:    { id:'wild',    name:'WILD',     type:'wild',    img:'assets/wild.png'    },
-  joakim:  { id:'joakim',  name:'JOAKIM',   type:'premium', img:'assets/blau.png'    },
-  par:     { id:'par',     name:'PÄR',      type:'premium', img:'assets/rosa.png'    },
-  chris:   { id:'chris',   name:'CHRIS',    type:'premium', img:'assets/lila.png'    },
-  tommy:   { id:'tommy',   name:'TOMMY',    type:'premium', img:'assets/gelb.png'    },
+  joakim:  { id:'joakim',  name:'JOAKIM',   type:'premium', img:'assets/blau.png', fullImg:'assets/blau full.png' },
+  par:     { id:'par',     name:'PÄR',      type:'premium', img:'assets/rosa.png', fullImg:'assets/rosa full.png' },
+  chris:   { id:'chris',   name:'CHRIS',    type:'premium', img:'assets/lila.png', fullImg:'assets/lila full.png' },
+  tommy:   { id:'tommy',   name:'TOMMY',    type:'premium', img:'assets/gelb.png', fullImg:'assets/gelb full.png' },
   helm:    { id:'helm',    name:'HELM',     type:'normal',  img:'assets/1.png'       },
   medaille:{ id:'medaille',name:'MEDAILLE', type:'normal',  img:'assets/2.png'       },
   schild:  { id:'schild',  name:'SCHILD',   type:'normal',  img:'assets/3.png'       },
@@ -1313,10 +956,6 @@ const SYM = {
   scatter: { id:'scatter', name:'SCATTER',  type:'scatter', img:'assets/special.png' },
   mystery: { id:'mystery', name:'MYSTERY',  type:'mystery', img:'assets/special.png' }
 };
-
-// ═══════════════════════════════════════════════════════════════════════════
-// ② GEWICHTETER SYMBOL-POOL
-// ═══════════════════════════════════════════════════════════════════════════
 
 const POOL = [
   'wild','wild',                                                  
@@ -1333,10 +972,6 @@ const POOL = [
   'scatter','scatter','scatter','scatter','scatter'  
 ];
 
-// ═══════════════════════════════════════════════════════════════════════════
-// ③ AUSZAHLUNGSTABELLE
-// ═══════════════════════════════════════════════════════════════════════════
-
 const PAYOUTS = {
   wild:    { 3: 50,    4: 300,   5: 500    },  
   joakim:  { 3: 2.00, 4: 6.00, 5: 18.00 },  
@@ -1348,10 +983,6 @@ const PAYOUTS = {
   schild:  { 3: 0.12, 4: 0.36, 5: 1.20  },  
   granate: { 3: 0.08, 4: 0.24, 5: 0.80  }   
 };
-
-// ═══════════════════════════════════════════════════════════════════════════
-// ④ PAYLINES
-// ═══════════════════════════════════════════════════════════════════════════
 
 const PAYLINES = [
   [1,1,1,1,1],   
@@ -1365,10 +996,6 @@ const PAYLINES = [
   [1,2,2,2,1],   
   [0,1,1,1,0]    
 ];
-
-// ═══════════════════════════════════════════════════════════════════════════
-// ⑤ SPIELZUSTAND
-// ═══════════════════════════════════════════════════════════════════════════
 
 const ROWS = 3, COLS = 5;
 let credits = 1000.0, bet = 2.0, currency = '€', spins = 0;
@@ -1386,10 +1013,6 @@ let battalionActive = false;
 let battalionTotal = 0;
 let battalionSpinsPlayed = 0;
 let battalionStartBalance = 0;
-
-// ═══════════════════════════════════════════════════════════════════════════
-// ⑥ WEB-AUDIO ENGINE
-// ═══════════════════════════════════════════════════════════════════════════
 
 let ctx = null;
 
@@ -1454,10 +1077,6 @@ function sndJackpot() {
   mel.forEach((f,i) => tone(f, 'sawtooth', 0.16, i * 0.1, 0.3));
   for (let i = 0; i < 18; i++) noise(0.05, i*0.07, 0.2, 800);
 }
-
-// ═══════════════════════════════════════════════════════════════════════════
-// ⑦ MUSIK-PLAYER
-// ═══════════════════════════════════════════════════════════════════════════
 
 const BISMARCK_TRACKS = [
   'music/Bismarck - base(1).mp3',
@@ -1696,10 +1315,6 @@ function toggleMusic() {
 
 function setVolume(v) { bgAudio.volume = v / 100; }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// ⑧ RASTER AUFBAUEN
-// ═══════════════════════════════════════════════════════════════════════════
-
 function buildGrid() {
   const wrap = document.getElementById('reels-wrap');
   const existingReels = wrap.querySelectorAll('.reel');
@@ -1708,11 +1323,17 @@ function buildGrid() {
   for (let c = 0; c < COLS; c++) {
     const reel = document.createElement('div');
     reel.className = 'reel'; reel.id = `reel-${c}`;
+    
+    const strip = document.createElement('div');
+    strip.className = 'reel-strip';
+    strip.id = `strip-${c}`;
+    reel.appendChild(strip);
+
     for (let r = 0; r < ROWS; r++) {
       const cell = document.createElement('div');
       cell.className = 'cell'; cell.id = `c-${r}-${c}`;
       cell.innerHTML = symHTML('helm'); 
-      reel.appendChild(cell);
+      strip.appendChild(cell);
     }
     wrap.appendChild(reel);
   }
@@ -1744,11 +1365,6 @@ function randomFill() {
 
 function rndSym() { return POOL[Math.floor(Math.random() * POOL.length)]; }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// ⑨ SPIN-ABLAUF
-// ═══════════════════════════════════════════════════════════════════════════
-
-const reelTimers = []; 
 const FEATURE_SYMBOLS = ['joakim','chris','par','tommy'];
 const FREE_SPIN_BONUS = 7;            
 const FREE_SPIN_RETRIGGER = 9;        
@@ -1778,9 +1394,6 @@ function chooseChainedSegment() {
   const len = Math.random() < 0.5 ? 2 : 3;
   const maxStart = COLS - len;
   const start = Math.floor(Math.random() * (maxStart + 1));
-  
-  // Stelle sicher, dass die Kette keine Scatter enthält
-  // Wir geben hier einfach das Segment zurück, die Validierung passiert in der Zuweisung
   return { start, len };
 }
 
@@ -1849,11 +1462,9 @@ function buildSpinMatrix() {
 function applyBattalionScatterBoost(grid) {
   const extraCount = 1 + Math.floor(Math.random() * 3); 
   let placed = 0, attempts = 0;
-  
   while (placed < extraCount && attempts < 20) {
     const r = Math.floor(Math.random() * ROWS);
     const c = Math.floor(Math.random() * COLS);
-    
     if (grid[r][c] !== 'scatter' && grid[r][c] !== 'wild' && grid[r][c] !== bonusSymbol) {
       grid[r][c] = 'scatter';
       placed++;
@@ -1873,24 +1484,16 @@ function applyMegaScatter(grid) {
 
 function applyChainedReels(grid) {
   if (!chainedReels) return;
-
   const segmentStart = chainedReels.start;
   const segmentLen = chainedReels.len;
-
-  // 1. Wähle ein Symbol, das kein Scatter und kein Mystery ist
   let syncSymbol;
   const nonScatterPool = Object.keys(SYM).filter(id => SYM[id].type !== 'scatter' && SYM[id].type !== 'mystery');
   syncSymbol = nonScatterPool[Math.floor(Math.random() * nonScatterPool.length)];
 
-  // 2. Wende dieses Symbol auf alle Felder im Segment an
   for (let c = segmentStart; c < segmentStart + segmentLen; c++) {
     for (let r = 0; r < ROWS; r++) {
       grid[r][c] = syncSymbol; 
     }
-  }
-
-  // 3. Markiere Walzen visuell
-  for (let c = segmentStart; c < segmentStart + segmentLen; c++) {
     document.getElementById(`reel-${c}`)?.classList.add('chained');
   }
 }
@@ -1906,7 +1509,6 @@ function applyMetalStacks(grid, symbol) {
   }
 }
 
-// ── KOPIERLOGIK FÜR DIE FUNKTIONEN ──
 function applyMegaSymbols(grid) {
   if (Math.random() > MEGA_SYMBOL_CHANCE) return;
   const blockSize = Math.random() < 0.5 ? 2 : 3;
@@ -2055,7 +1657,6 @@ function startBattalionSpins(retrigger = false) {
   if (musicOn) playBismarckPhase(3);
   updateTensionUI();
 
-  // Wenn Autoplay aktiv ist, nächsten Spin nach dem Banner anstarten
   if (autoPlayActive) {
     setTimeout(() => {
       if (autoPlayActive && !spinning) spin();
@@ -2082,11 +1683,8 @@ function triggerBattalionSpins(retrigger = false) {
     const existing = document.getElementById('battalion-confirm');
     if (existing) existing.remove();
 
-    // Autoplay pausieren bis der Spieler bestätigt hat
     const wasAutoPlay = autoPlayActive;
-    if (wasAutoPlay) {
-      autoPlayActive = false; // temporär anhalten, NICHT stopAutoPlay (zähler behalten)
-    }
+    if (wasAutoPlay) autoPlayActive = false; 
 
     const overlay = document.createElement('div');
     overlay.id = 'battalion-confirm';
@@ -2101,7 +1699,6 @@ function triggerBattalionSpins(retrigger = false) {
 
     overlay.querySelector('.battalion-confirm-btn').addEventListener('click', () => {
       overlay.remove();
-      // Autoplay wieder einschalten wenn es vorher aktiv war
       if (wasAutoPlay) autoPlayActive = true;
       startBattalionSpins(false);
     });
@@ -2196,32 +1793,24 @@ function spin() {
   sndSpin();
 
   for (let c = 0; c < COLS; c++) {
-    const reel = document.getElementById(`reel-${c}`);
-    const dur = (0.09 + Math.random() * 0.12).toFixed(3) + 's'; 
-    const blurMax = Math.floor(4 + Math.random() * 8); 
-    const blurMin = Math.floor(Math.random() * 2); 
-    const translate = Math.floor(6 + Math.random() * 12); 
-    const rot = (Math.random() * 4 - 2).toFixed(2); 
-    const delay = (Math.random() * 0.06).toFixed(3) + 's';
-    const symDur = (0.32 + Math.random() * 0.4).toFixed(3) + 's';
-    const symTranslate = Math.floor(10 + Math.random() * 20); 
-    const symBlur = (0.6 + Math.random() * 1.8).toFixed(2); 
-    reel.style.setProperty('--spin-dur', dur);
-    reel.style.setProperty('--spin-blur-min', String(blurMin));
-    reel.style.setProperty('--spin-blur-max', String(blurMax));
-    reel.style.setProperty('--spin-translate', String(translate));
-    reel.style.setProperty('--spin-rot', String(rot));
-    reel.style.setProperty('--spin-delay', delay);
-    reel.style.setProperty('--sym-dur', symDur);
-    reel.style.setProperty('--sym-translate', String(symTranslate));
-    reel.style.setProperty('--sym-blur', String(symBlur));
-    reel.classList.add('spinning');
-    reelTimers[c] = setInterval(() => {
-      for (let r = 0; r < ROWS; r++) {
-        const el = document.getElementById(`c-${r}-${c}`);
-        if (el) el.innerHTML = symHTML(rndSym());
-      }
-    }, 75);
+    const strip = document.getElementById(`strip-${c}`);
+    strip.innerHTML = '';
+    
+    for (let f = 0; f < 12; f++) {
+      const fakeCell = document.createElement('div');
+      fakeCell.className = 'cell';
+      fakeCell.innerHTML = symHTML(rndSym());
+      strip.appendChild(fakeCell);
+    }
+    for (let r = 0; r < ROWS; r++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell'; cell.id = `c-${r}-${c}`;
+      cell.innerHTML = symHTML(rndSym());
+      strip.appendChild(cell);
+    }
+    
+    strip.style.transform = 'translateY(0)';
+    strip.classList.add('reel-spinning');
   }
 
   for (let c = 0; c < COLS; c++) {
@@ -2230,17 +1819,25 @@ function spin() {
 }
 
 function stopReel(c, final, isLast) {
-  clearInterval(reelTimers[c]);
-  const reel = document.getElementById(`reel-${c}`);
-  reel.classList.remove('spinning');
-  for (let r = 0; r < ROWS; r++) setCell(r, c, final[r][c]);
+  const strip = document.getElementById(`strip-${c}`);
+  strip.classList.remove('reel-spinning');
+  strip.innerHTML = '';
+  
+  for (let r = 0; r < ROWS; r++) {
+    const cell = document.createElement('div');
+    cell.className = 'cell'; cell.id = `c-${r}-${c}`;
+    strip.appendChild(cell);
+    setCell(r, c, final[r][c]);
+  }
+  
+  strip.classList.add('reel-stopping');
   sndStop(c);
 
+  const reel = document.getElementById(`reel-${c}`);
   if (chainedReels && c === chainedReels.start) {
     const pill = document.createElement('div');
     pill.className = 'feature-pill';
     pill.textContent = `CHAINED ×${chainedReels.len}`;
-    reel.style.position = 'relative';
     reel.appendChild(pill);
     setTimeout(() => pill.remove(), 2000);
   }
@@ -2250,14 +1847,14 @@ function stopReel(c, final, isLast) {
     pill.className = 'feature-pill';
     pill.style.background = '#e74c3c';
     pill.textContent = 'LAST STAND';
-    reel.style.position = 'relative';
     reel.appendChild(pill);
     setTimeout(() => pill.remove(), 2000);
   }
 
-  if (isLast) {
-    setTimeout(() => evalWin(), 180);
-  }
+  setTimeout(() => {
+    strip.classList.remove('reel-stopping');
+    if (isLast) setTimeout(() => evalWin(), 180);
+  }, 250);
 }
 
 function markMegaSymbolCells() {
@@ -2279,6 +1876,7 @@ function markMegaSymbolCells() {
         for (let dc = 0; dc < blockSize && isBlock; dc++)
           for (let dr = 0; dr < blockSize && isBlock; dr++)
             if (matrix[sr+dr][sc+dc] !== sym) isBlock = false;
+        
         if (isBlock) {
           for (let dc = 0; dc < blockSize; dc++)
             for (let dr = 0; dr < blockSize; dr++) {
@@ -2299,7 +1897,9 @@ function markMegaSymbolCells() {
             overlay.style.top    = (fRect.top  - wRect.top)  + 'px';
             overlay.style.width  = (lRect.right  - fRect.left) + 'px';
             overlay.style.height = (lRect.bottom - fRect.top)  + 'px';
-            overlay.innerHTML = `<img src="${SYM[sym].img}" alt="${SYM[sym].name}">`;
+            
+            const imgSrc = SYM[sym].fullImg || SYM[sym].img;
+            overlay.innerHTML = `<img src="${imgSrc}" alt="${SYM[sym].name}">`;
             wrap.appendChild(overlay);
           }
 
@@ -2356,7 +1956,6 @@ function showWinPopup(amount, tier, onDone) {
   }
   requestAnimationFrame(() => pop.classList.add('show'));
   const dur = tier.cls === 'tier-jackpot' ? 4200 : tier.cls === 'tier-epic' ? 3400 : tier.cls === 'tier-mega' ? 2800 : 2200;
-  // Bei Autoplay-Bestätigung bleibt das Popup länger (bis der Dialog kommt)
   const mult = bet > 0 ? amount / bet : 0;
   const needConfirm = autoPlayActive && ((autoPlayConfirmMeg && mult >= 10) || (autoPlayConfirmBig && mult >= 5 && mult < 10));
   const actualDur = needConfirm ? dur + 1200 : dur;
@@ -2364,7 +1963,6 @@ function showWinPopup(amount, tier, onDone) {
     pop.classList.remove('show');
     setTimeout(() => { pop.remove(); onDone && onDone(); }, 350);
   }, actualDur);
-  // Klick schließt das Popup frühzeitig (nur wenn kein Confirm nötig)
   pop.style.cursor = 'pointer';
   pop.addEventListener('click', () => {
     if (needConfirm) return;
@@ -2395,10 +1993,6 @@ function showBattalionSummary(totalWon, spinsPlayed) {
   requestAnimationFrame(() => card.classList.add('show'));
   sndJackpot();
 }
-
-// ═══════════════════════════════════════════════════════════════════════════
-// ⑨.5 PAYLINE BLITZ-ANIMATIONEN
-// ═══════════════════════════════════════════════════════════════════════════
 
 function calculatePathLength(points) {
   let length = 0;
@@ -2495,16 +2089,11 @@ function clearPaylineAnimations() {
   if (svg) svg.innerHTML = '';
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// ⑩ GEWINNAUSWERTUNG (ASYNCHRON REPARIERT)
-// ═══════════════════════════════════════════════════════════════════════════
-
 function evalWin() {
   clearPaylineAnimations();
   transformMysteries(matrix);
   const scatterCount = countScatters(matrix);
 
-  // Kapselung der Auszahlungslogik, damit wir sie gezielt NACH der Transformation ausführen können
   const proceedWithPayouts = () => {
     updateGridDisplay(matrix); 
     markMegaSymbolCells();
@@ -2568,8 +2157,8 @@ function evalWin() {
       bonusSymbol = null; 
       setTimeout(() => showBattalionSummary(summaryTotal, summaryCount), 1200);
     } else if (!battalionActive && freeSpins <= 0 && scatterCount < FREE_SPIN_RETRIGGER) {
-    bonusSymbol = null;
-  }
+      bonusSymbol = null;
+    }
 
     updateBismarckTension(total);
     updateUI();
@@ -2585,7 +2174,6 @@ function evalWin() {
       }, total > 0 ? 1800 : 600);
     }
 
-    // Autoplay weiterschalten — hier ist total korrekt im Scope
     if (autoPlayActive) {
       if (credits < bet && freeSpins <= 0) {
         stopAutoPlay();
@@ -2595,7 +2183,6 @@ function evalWin() {
     }
   };
 
-  // Asynchrone Weichenstellung basierend auf den Scattern
   if (freeSpins > 0 || battalionActive) {
     if (scatterCount >= FREE_SPIN_RETRIGGER) {
       flashScatterTransformation(matrix, () => {
@@ -2633,10 +2220,6 @@ function evalWin() {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// ⑪ UI-HILFSFUNKTIONEN
-// ═══════════════════════════════════════════════════════════════════════════
-
 function updateUI() {
   document.getElementById('d-credits').textContent = `${formatAmount(credits)} ${currency}`;
   document.getElementById('d-bet').textContent     = `${formatAmount(bet)} ${currency}`;
@@ -2663,26 +2246,13 @@ function changeBet() {
   updateUI();
 }
 
-function applyCredits() {
-  const v = parseFloat(document.getElementById('inp-credits').value);
-  if (!isNaN(v) && v >= 0) {
-    credits = v; updateUI();
-    setTicker(`Guthaben auf ${formatAmount(v)} ${currency} gesetzt.`);
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// ⑫ AUTOPLAY
-// ═══════════════════════════════════════════════════════════════════════════
-
-// Autoplay-Einstellungen (werden beim Start aus dem Modal gelesen)
-let autoPlayDelay      = 1200;   // ms Pause nach jedem Spin
-let autoPlayWinDelay   = 2000;   // ms Extra-Pause bei Gewinn
-let autoPlayStopWin    = 0;      // Stopp bei Einzelgewinn >= dieser Betrag (0 = aus)
-let autoPlayStopBal    = 0;      // Stopp wenn Guthaben < dieser Wert (0 = aus)
-let autoPlayConfirmBig = false;  // Bestätigung bei BIG WIN (≥5×)
-let autoPlayConfirmMeg = true;   // Bestätigung bei MEGA WIN+ (≥10×)
-let winConfirmPending  = false;  // Warte auf Nutzer-Bestätigung
+let autoPlayDelay      = 1200;   
+let autoPlayWinDelay   = 2000;   
+let autoPlayStopWin    = 0;      
+let autoPlayStopBal    = 0;      
+let autoPlayConfirmBig = false;  
+let autoPlayConfirmMeg = true;   
+let winConfirmPending  = false;  
 
 function toggleAutoPlay() {
   if (autoPlayActive) {
@@ -2734,11 +2304,9 @@ function stopAutoPlay() {
   }
 }
 
-// Wird nach jedem Spin aufgerufen um zu entscheiden ob/wann der nächste läuft
 function scheduleNextAutoSpin(lastWin) {
   if (!autoPlayActive) return;
 
-  // Stop-Bedingungen prüfen
   if (credits < bet && freeSpins <= 0) { stopAutoPlay(); return; }
   if (autoPlayStopBal > 0 && credits < autoPlayStopBal) {
     stopAutoPlay();
@@ -2751,7 +2319,6 @@ function scheduleNextAutoSpin(lastWin) {
     return;
   }
 
-  // Bestätigung bei großem Gewinn
   const mult = bet > 0 ? lastWin / bet : 0;
   const needConfirm = (autoPlayConfirmMeg && mult >= 10) || (autoPlayConfirmBig && mult >= 5 && mult < 10);
   if (needConfirm && lastWin > 0) {
@@ -2759,7 +2326,6 @@ function scheduleNextAutoSpin(lastWin) {
     return;
   }
 
-  // Zähler nur dekrementieren wenn KEIN Free Spin läuft
   if (freeSpins <= 0) {
     if (autoPlayCount !== Infinity) {
       autoPlayCount--;
@@ -2769,7 +2335,6 @@ function scheduleNextAutoSpin(lastWin) {
     if (autoPlayCount <= 0 && autoPlayCount !== Infinity) { stopAutoPlay(); return; }
   }
 
-  // Pause berechnen: Basisverzögerung + Extra-Pause bei Gewinn
   const delay = autoPlayDelay + (lastWin > 0 ? autoPlayWinDelay : 0);
   setTimeout(() => {
     if (autoPlayActive && !spinning) spin();
@@ -2814,10 +2379,6 @@ function winConfirmStop() {
   document.getElementById('win-confirm-modal').classList.add('hidden');
   stopAutoPlay();
 }
-
-// ═══════════════════════════════════════════════════════════════════════════
-// ⑫ INIT
-// ═══════════════════════════════════════════════════════════════════════════
 
 window.onload = () => {
   const saved = localStorage.getItem('gamehub_credits');
