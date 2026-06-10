@@ -1,0 +1,1665 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flip 7</title>
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-card-zone: #1e293b;
+            --accent: #f59e0b;
+            --player-color: #3b82f6;
+            --bot-color: #ef4444;
+            --card-width: 90px;
+            --card-height: 140px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+            color: #f8fafc;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        /* Hintergrund-Element für Medien */
+        #easteregg-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -2;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            transition: opacity 0.8s ease-in-out, filter 0.3s ease;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #easteregg-video {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -2;
+            object-fit: cover;
+            transition: opacity 0.8s ease-in-out;
+            opacity: 0;
+            pointer-events: none;
+            display: none;
+        }
+
+        /* Haupt-Container des Spiels mit Abstand zu den Seiten-Tabs */
+        #main-game-wrapper {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 60px;
+            box-sizing: border-box;
+            transition: all 0.4s ease;
+        }
+
+        /* Unauffälliger Mute-Button im Spiel */
+        .mute-toggle-btn {
+            position: absolute;
+            top: 10px;
+            right: 70px;
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid #475569;
+            color: #cbd5e1;
+            padding: 5px 8px;
+            font-size: 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+            z-index: 10;
+            transition: all 0.2s ease;
+        }
+        .mute-toggle-btn:hover {
+            background: rgba(71, 85, 105, 0.8);
+            color: #fff;
+        }
+
+        /* ── WIDGET MODUS STYLES ── */
+        #main-game-wrapper.widget-mode {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 320px;
+            max-width: 320px;
+            z-index: 900;
+            background: rgba(15, 23, 42, 0.9);
+            border: 2px solid var(--accent);
+            border-radius: 16px;
+            padding: 10px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+            backdrop-filter: blur(15px);
+            cursor: move;
+        }
+
+        #main-game-wrapper.widget-mode h1,
+        #main-game-wrapper.widget-mode .rules-toggle-btn,
+        #main-game-wrapper.widget-mode #rules-box,
+        #main-game-wrapper.widget-mode .mute-toggle-btn {
+            display: none !important;
+        }
+
+        #main-game-wrapper.widget-mode .scoreboard {
+            padding: 5px 15px;
+            gap: 10px;
+            margin-bottom: 10px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        #main-game-wrapper.widget-mode .score-box { padding: 2px 10px; }
+        #main-game-wrapper.widget-mode .score-val { font-size: 1.2rem; }
+        #main-game-wrapper.widget-mode .hand-counter { font-size: 0.8rem; padding: 4px 10px; margin-bottom: 10px; }
+        #main-game-wrapper.widget-mode .game-area { padding: 10px; border-radius: 12px; }
+        #main-game-wrapper.widget-mode .status-banner { font-size: 0.9rem; height: auto; margin-bottom: 10px; text-align: center; }
+        #main-game-wrapper.widget-mode .board-layout { padding: 8px; gap: 8px; margin-bottom: 10px; }
+        #main-game-wrapper.widget-mode .zone-title { font-size: 0.7rem; }
+        
+        #main-game-wrapper.widget-mode .card {
+            width: 45px !important;
+            height: 70px !important;
+            font-size: 1rem !important;
+            padding: 4px !important;
+            border-width: 1px !important;
+            border-radius: 6px !important;
+        }
+        #main-game-wrapper.widget-mode .card .mini-num { font-size: 0.55rem !important; }
+        #main-game-wrapper.widget-mode .card.special-card { width: 40px !important; height: 60px !important; border-width: 2px !important; }
+        #main-game-wrapper.widget-mode .card.special-sc .main-num { font-size: 0.4rem !important; }
+        #main-game-wrapper.widget-mode .card.special-f7 .main-num { font-size: 0.55rem !important; }
+        #main-game-wrapper.widget-mode .card.special-x2 .main-num { font-size: 0.75rem !important; }
+        #main-game-wrapper.widget-mode .card.special-fz .main-num { font-size: 0.5rem !important; }
+        #main-game-wrapper.widget-mode .card.special-plus .main-num { font-size: 0.75rem !important; }
+
+        #main-game-wrapper.widget-mode button { padding: 8px 15px; font-size: 0.85rem; border-radius: 8px; }
+        #main-game-wrapper.widget-mode .controls { gap: 10px; }
+
+        #widget-header {
+            display: none;
+            width: 100%;
+            height: 24px;
+            background: #334155;
+            border-radius: 8px 8px 0 0;
+            margin-bottom: 8px;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            color: #94a3b8;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        #main-game-wrapper.widget-mode #widget-header { display: flex; }
+
+        .widget-toggle-btn {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            border-radius: 20px;
+            cursor: pointer;
+            border: none;
+            margin-bottom: 15px;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+            transition: all 0.2s ease;
+        }
+        .widget-toggle-btn:hover { transform: translateY(-1px); filter: brightness(1.1); }
+
+        h1 {
+            font-size: 3rem;
+            color: #f59e0b;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin: 10px 0 5px 0;
+            text-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+        }
+
+        .rules-toggle-btn {
+            background: rgba(51, 65, 85, 0.6);
+            color: #cbd5e1;
+            border: 1px solid #475569;
+            padding: 6px 14px;
+            font-size: 0.85rem;
+            border-radius: 20px;
+            cursor: pointer;
+            margin-bottom: 15px;
+            transition: all 0.2s ease;
+        }
+        .rules-toggle-btn:hover { background: rgba(71, 85, 105, 0.8); color: #fff; }
+
+        .rules-container {
+            max-width: 750px;
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-bottom: 25px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: #cbd5e1;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            max-height: 600px;
+            overflow: hidden;
+            opacity: 1;
+        }
+        .rules-container.collapsed { max-height: 0; padding-top: 0; padding-bottom: 0; margin-bottom: 0; opacity: 0; border-color: transparent; }
+        .rules-container p { margin: 0 0 8px 0; }
+        .rules-container p:last-child { margin-bottom: 0; }
+        .rules-container strong { color: #f59e0b; }
+        
+        .rules-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #334155; font-size: 0.85rem; }
+
+        .scoreboard { display: flex; gap: 30px; background: rgba(30, 41, 59, 0.7); padding: 15px 40px; border-radius: 50px; border: 2px solid #334155; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); backdrop-filter: blur(10px); margin-bottom: 20px; transition: all 0.5s ease; }
+        .score-box { display: flex; flex-direction: column; align-items: center; padding: 10px 20px; border-radius: 20px; transition: all 0.4s ease; position: relative; }
+        .score-box.player { color: #60a5fa; }
+        .score-box.bot { color: #f87171; }
+        .score-box.active { background: rgba(255, 255, 255, 0.05); transform: scale(1.05); box-shadow: 0 0 20px rgba(255, 255, 255, 0.1); }
+        .score-box.active::after { content: ''; position: absolute; bottom: -5px; width: 40%; height: 4px; background: currentColor; border-radius: 2px; animation: pulse 1.5s infinite; }
+
+        .score-label { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; color: #94a3b8; }
+        .score-val { font-size: 2rem; font-weight: 800; }
+
+        .hand-counter { font-size: 1.1rem; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); padding: 6px 20px; border-radius: 20px; color: #fde047; font-weight: 600; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: all 0.3s ease; }
+
+        .game-area { width: 100%; background: rgba(30, 41, 59, 0.4); border-radius: 24px; border: 1px solid #334155; padding: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.4); position: relative; box-sizing: border-box; }
+        .status-banner { font-size: 1.25rem; font-weight: 600; height: 40px; display: flex; align-items: center; justify-content: center; color: #e2e8f0; margin-bottom: 20px; transition: all 0.3s ease; }
+
+        .board-layout { display: flex; flex-direction: column; gap: 15px; background: #0b0f19; border-radius: 16px; padding: 20px; box-shadow: inset 0 4px 20px rgba(0,0,0,0.6); border: 1px solid #1e293b; margin-bottom: 25px; }
+        .zone-title { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; color: #64748b; margin-bottom: 5px; padding-left: 10px; }
+        .cards-container { min-height: 70px; display: flex; justify-content: center; align-items: center; gap: 12px; flex-wrap: wrap; transition: all 0.3s ease; }
+        #number-zone { min-height: 150px; border-top: 1px dashed #1e293b; padding-top: 15px; }
+
+        /* Karten-Design */
+        .card {
+            width: var(--card-width); height: var(--card-height); border-radius: 12px; display: flex; flex-direction: column; justify-content: space-between; padding: 12px; font-size: 2rem; font-weight: 800; box-sizing: border-box; box-shadow: 0 6px 15px rgba(0,0,0,0.4), inset 0 0 15px rgba(255,255,255,0.1); position: relative; user-select: none; border: 2px solid rgba(255,255,255,0.2); background: #2563eb; transform-origin: center; animation: drawAnim 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; transition: all 0.4s ease;
+        }
+        .card.special-card { width: 80px; height: 120px; border: 4px solid #f59e0b; box-shadow: 0 0 15px rgba(245, 158, 11, 0.5), inset 0 0 10px rgba(255,255,255,0.2); }
+        .card.special-sc.special-used { animation: useCardAnim 0.6s ease-in-out forwards !important; border: 4px dashed #ef4444 !important; box-shadow: 0 0 15px rgba(239, 68, 68, 0.6) !important; filter: grayscale(0.4) brightness(0.7); }
+
+        @keyframes useCardAnim { 0% { transform: scale(1); } 50% { transform: scale(1.15) rotate(5deg); filter: brightness(1.4); } 100% { transform: scale(0.95) rotate(0deg); } }
+        .card .mini-num { font-size: 1rem; font-weight: 600; text-align: left; }
+        .card .mini-num.bottom { text-align: right; transform: rotate(180deg); }
+        .card .main-num { text-align: center; flex-grow: 1; display: flex; align-items: center; justify-content: center; }
+
+        /* Kartentypen Farben */
+        .card[data-val="0"] { background: linear-gradient(135deg, #475569, #1e293b); color: #cbd5e1; }
+        .card[data-val="1"] { background: linear-gradient(135deg, #10b981, #047857); color: #fff; }
+        .card[data-val="2"] { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: #fff; }
+        .card[data-val="3"] { background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: #fff; }
+        .card[data-val="4"] { background: linear-gradient(135deg, #ec4899, #be185d); color: #fff; }
+        .card[data-val="5"] { background: linear-gradient(135deg, #f43f5e, #be123c); color: #fff; }
+        .card[data-val="6"] { background: linear-gradient(135deg, #06b6d4, #0891b2); color: #fff; }
+        .card[data-val="7"] { background: linear-gradient(135deg, #eab308, #a16207); color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        .card[data-val="8"] { background: linear-gradient(135deg, #f97316, #c2410c); color: #fff; }
+        .card[data-val="9"] { background: linear-gradient(135deg, #14b8a6, #0f766e); color: #fff; }
+        .card[data-val="10"] { background: linear-gradient(135deg, #6366f1, #4338ca); color: #fff; }
+        .card[data-val="11"] { background: linear-gradient(135deg, #d946ef, #a21caf); color: #fff; }
+        .card[data-val="12"] { background: linear-gradient(135deg, #a855f7, #6b21a8); color: #fff; }
+        .card.special-sc { background: linear-gradient(135deg, #334155, #1e293b); color: #38bdf8; }
+        .card.special-f7 { background: linear-gradient(135deg, #ef4444, #991b1b); color: #fff; }
+        .card.special-x2 { background: linear-gradient(135deg, #ffe066 0%, #f59e0b 50%, #b45309 100%); color: #1e293b; text-shadow: 0 1px 2px rgba(255,255,255,0.4); border-color: #fffbeb !important; box-shadow: 0 0 20px rgba(245, 158, 11, 0.6), inset 0 0 10px rgba(255,255,255,0.4) !important; }
+        .card.special-fz { background: linear-gradient(135deg, #2563eb, #1e3a8a); color: #67e8f9; }
+        .card.special-plus { background: linear-gradient(135deg, #84cc16, #4d7c0f); color: #fff; }
+
+        .card.special-sc .main-num { font-size: 0.8rem; text-align: center; line-height: 1.2; }
+        .card.special-f7 .main-num { font-size: 1.1rem; text-transform: uppercase; font-style: italic; }
+        .card.special-x2 .main-num { font-size: 1.5rem; font-weight: 900; text-transform: uppercase; }
+        .card.special-fz .main-num { font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; }
+        .card.special-plus .main-num { font-size: 1.6rem; }
+
+        @keyframes drawAnim { 0% { transform: translateY(-30px) scale(0.6) rotate(-10deg); opacity: 0; } 100% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; } }
+        @keyframes pulse { 0%, 100% { opacity: 0.6; transform: scaleX(0.8); } 50% { opacity: 1; transform: scaleX(1.2); } }
+
+        .board-layout.bust .card { transform: translateY(20px) rotate(5deg); opacity: 0.3; filter: grayscale(0.8); transition: all 0.6s ease; }
+        .board-layout.collect .card { transform: scale(0.1) translateY(-100px); opacity: 0; transition: all 0.6s ease-in-out; }
+        .board-layout.freeze-anim .card:not(.special-fz) { transform: scale(1.02); filter: saturate(1.2); box-shadow: 0 0 25px rgba(6,182,212,0.8); transition: all 0.8s ease; }
+
+        .controls { display: flex; justify-content: center; gap: 20px; }
+        button { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #0f172a; font-size: 1.1rem; font-weight: 700; padding: 14px 30px; border: none; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3); transition: all 0.2s ease; }
+        button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5); filter: brightness(1.1); }
+        button:disabled { background: #334155; color: #64748b; box-shadow: none; cursor: not-allowed; }
+        button#btn-stop { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
+
+        .restart-box { margin-top: 25px; display: none; }
+        .restart-box.visible { display: block; animation: drawAnim 0.5s ease forwards; }
+
+        /* ── SIDEBARS & TABS STRUKTUR MIT FIXED PADDING GEGEN ÜBERLAGERUNG ── */
+        .deck-toggle-tab { 
+            position: fixed; 
+            left: 0; 
+            top: 50%; 
+            transform: translateY(-50%); 
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); 
+            color: #0f172a; 
+            padding: 20px 10px; 
+            font-weight: 800; 
+            cursor: pointer; 
+            border-radius: 0 12px 12px 0; 
+            box-shadow: 4px 0 15px rgba(0,0,0,0.3); 
+            z-index: 1000; 
+            writing-mode: vertical-lr; 
+            text-transform: uppercase; 
+            letter-spacing: 2px; 
+            font-size: 0.9rem; 
+            transition: all 0.3s ease; 
+        }
+        .deck-toggle-tab:hover { padding-left: 15px; filter: brightness(1.1); }
+
+        .deck-sidebar { position: fixed; left: -410px; width: 390px; height: 100vh; top: 0; background: rgba(15, 23, 42, 0.96); border-right: 2px solid #334155; box-shadow: 10px 0 30px rgba(0,0,0,0.5); z-index: 999; transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1); padding: 20px 20px 20px 55px; box-sizing: border-box; overflow-y: auto; backdrop-filter: blur(10px); }
+        .deck-sidebar.open { left: 0; }
+
+        .sidebar-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #334155; padding-bottom: 5px; margin-bottom: 10px; }
+        .sidebar-header h2 { margin: 0; color: #f59e0b; font-size: 1.4rem; text-transform: uppercase; }
+        .close-sidebar-btn { background: transparent; border: none; color: #cbd5e1; font-size: 1.5rem; cursor: pointer; padding: 0; box-shadow: none; }
+        .close-sidebar-btn:hover { color: #ef4444; }
+
+        .tracker-section-title { font-size: 0.75rem; text-transform: uppercase; color: #64748b; letter-spacing: 1px; margin: 10px 0 5px 0; border-bottom: 1px solid rgba(51, 65, 85, 0.4); padding-bottom: 2px; }
+        .tracker-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 8px; margin-bottom: 5px; }
+        .tracker-wrapper { display: flex; flex-direction: column; align-items: center; }
+        .tracker-count-top { font-size: 0.75rem; font-weight: 800; color: #fde047; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.3s ease; }
+        
+        .tracker-wrapper .card { width: 54px; height: 84px; border-radius: 6px; padding: 5px; font-size: 1.1rem; box-shadow: 0 3px 8px rgba(0,0,0,0.5); border-width: 1.5px; animation: none; cursor: default; }
+        .tracker-wrapper .card.special-card { width: 54px; height: 84px; border-width: 2px; }
+        .tracker-wrapper .card .mini-num { font-size: 0.55rem; }
+        .tracker-wrapper .card.special-sc .main-num { font-size: 0.45rem; line-height: 1.1; }
+        .tracker-wrapper .card.special-f7 .main-num { font-size: 0.65rem; }
+        .tracker-wrapper .card.special-x2 .main-num { font-size: 0.85rem; }
+        .tracker-wrapper .card.special-fz .main-num { font-size: 0.6rem; }
+        .tracker-wrapper .card.special-plus .main-num { font-size: 0.85rem; }
+
+        .tracker-wrapper.empty { opacity: 0.25; filter: grayscale(0.8); }
+        .tracker-wrapper.empty .card { border-style: dashed !important; box-shadow: none; }
+        .tracker-wrapper.changed .tracker-count-top { color: #ef4444; transform: scale(1.2); }
+
+        .tracker-wrapper.in-hand { position: relative; }
+        .tracker-wrapper.in-hand .card { border: 2.5px solid #ef4444 !important; box-shadow: 0 0 10px rgba(239, 68, 68, 0.55), 0 3px 8px rgba(0,0,0,0.5) !important; filter: brightness(0.72) saturate(0.5); }
+        .tracker-wrapper.in-hand .tracker-count-top { color: #ef4444; }
+        .tracker-wrapper.in-hand::before { content: '✋ auf der Hand'; position: absolute; top: -18px; left: 50%; transform: translateX(-50%); background: #ef4444; color: #fff; font-size: 0.48rem; font-weight: 800; letter-spacing: 0.3px; white-space: nowrap; padding: 2px 5px; border-radius: 4px; text-transform: uppercase; pointer-events: none; z-index: 2; }
+
+        .tracker-wrapper.in-hand-safe .card { border: 2.5px solid #22c55e !important; box-shadow: 0 0 10px rgba(34, 197, 94, 0.45), 0 3px 8px rgba(0,0,0,0.5) !important; }
+        .tracker-wrapper.in-hand-safe .tracker-count-top { color: #22c55e; }
+        .tracker-wrapper.in-hand-safe::before { content: '✔ aktiv'; background: #16a34a; }
+
+        /* Angepasster rechter Tab (Verhindert Überlappungen mit Game Wrapper) */
+        .debug-toggle-tab { 
+            position: fixed; 
+            right: 0; 
+            top: 50%; 
+            transform: translateY(-50%); 
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); 
+            color: #0f172a; 
+            padding: 20px 10px; 
+            font-weight: 800; 
+            cursor: pointer; 
+            border-radius: 12px 0 0 12px; 
+            box-shadow: -4px 0 15px rgba(0,0,0,0.3); 
+            z-index: 1000; 
+            writing-mode: vertical-lr; 
+            text-transform: uppercase; 
+            letter-spacing: 2px; 
+            font-size: 0.9rem; 
+            transition: all 0.3s ease; 
+            display: none; 
+        }
+        .debug-toggle-tab:hover { padding-right: 15px; filter: brightness(1.1); }
+
+        .debug-sidebar { position: fixed; right: -320px; width: 300px; height: 100vh; top: 0; background: rgba(15, 23, 42, 0.96); border-left: 2px solid #334155; box-shadow: -10px 0 30px rgba(0,0,0,0.5); z-index: 999; transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1); padding: 20px; box-sizing: border-box; overflow-y: auto; backdrop-filter: blur(10px); }
+        .debug-sidebar.open { right: 0; }
+
+        .debug-option { margin-bottom: 12px; background: rgba(30, 41, 59, 0.5); padding: 10px; border-radius: 8px; border: 1px solid #334155; }
+        .debug-option label { display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 5px; }
+        .debug-option input[type="number"], .debug-option select { width: 100%; background: #0f172a; border: 1px solid #475569; color: #fff; padding: 6px; border-radius: 4px; box-sizing: border-box; font-family: inherit; }
+        .debug-option-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
+
+        .media-controls-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 5px; }
+        .media-controls-grid button { padding: 8px; font-size: 0.85rem; text-align: center; box-shadow: none; border-radius: 6px; }
+
+        .filter-controls-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .filter-controls-grid button { padding: 8px; font-size: 0.8rem; border-radius: 6px; box-shadow: none; font-weight: bold; }
+
+        .history-panel { display: flex; gap: 6px; overflow-x: auto; padding: 5px 0; margin-top: 5px; max-width: 100%; border-top: 1px dashed #334155; }
+        .history-thumb { width: 44px; height: 32px; background-size: cover; background-position: center; background-color: #1e293b; border-radius: 4px; cursor: pointer; border: 1px solid #475569; transition: border-color 0.2s; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: #94a3b8; }
+        .history-thumb:hover { border-color: var(--accent); }
+
+        .secret-input-container { margin-top: 40px; opacity: 0.15; transition: opacity 0.3s; }
+        .secret-input-container:hover { opacity: 1; }
+        .secret-input-container input { background: rgba(30, 41, 59, 0.7); border: 1px solid #334155; color: #f8fafc; padding: 6px 12px; border-radius: 6px; text-align: center; font-family: inherit; font-size: 0.8rem; }
+        .secret-input-container button { display: none; margin: 5px auto 0 auto; padding: 6px 15px; font-size: 0.8rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; box-shadow: none; }
+    
+        /* ── HUB CREDITS ANZEIGE ── */
+        #flip7-credits-bar {
+            font-size: 0.9rem; color: #fde047;
+            background: rgba(245,158,11,0.1);
+            border: 1px solid rgba(245,158,11,0.22);
+            border-radius: 20px; padding: 5px 18px;
+            margin-bottom: 12px; font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        /* ── WETT-INTERFACE ── */
+        .bet-overlay {
+            position: absolute; inset: 0; z-index: 50;
+            background: rgba(10, 18, 35, 0.93);
+            border-radius: 24px;
+            display: flex; align-items: center; justify-content: center;
+            backdrop-filter: blur(6px);
+        }
+        .bet-overlay.hidden { display: none; }
+        .bet-box {
+            text-align: center; padding: 30px 38px;
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border: 1px solid rgba(245,158,11,.45);
+            border-radius: 18px;
+            box-shadow: 0 0 50px rgba(0,0,0,.7), 0 0 15px rgba(245,158,11,.1);
+            max-width: 390px; width: 92%;
+        }
+        .bet-box h3 { margin: 0 0 6px; color: #f59e0b; font-size: 1.4rem; font-weight: 800; letter-spacing: 1px; }
+        .bet-balance { color: #fde047; font-size: 0.95rem; margin-bottom: 22px; opacity: 0.9; }
+        .bet-slider-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-size: 0.8rem; color: #64748b; }
+        .bet-slider-row input[type="range"] { flex: 1; accent-color: #f59e0b; cursor: pointer; }
+        .bet-amount-row { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 16px; }
+        .bet-number-input {
+            width: 90px; padding: 8px; font-size: 1.1rem; text-align: center;
+            background: #0f172a; border: 1px solid rgba(245,158,11,.4);
+            color: #fff; border-radius: 8px; font-family: inherit;
+        }
+        .bet-number-input:focus { outline: none; border-color: #f59e0b; }
+        .bet-amount-label { color: #94a3b8; font-size: 0.9rem; }
+        .bet-warning { color: #ef4444; font-size: 0.82rem; margin-bottom: 12px; min-height: 18px; }
+        #btn-bet-confirm {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: #0f172a; font-size: 1rem; font-weight: 700;
+            padding: 13px 28px; border: none; border-radius: 12px;
+            cursor: pointer; width: 100%;
+            box-shadow: 0 4px 15px rgba(245,158,11,0.35);
+            transition: all 0.2s ease;
+        }
+        #btn-bet-confirm:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.1); }
+        #btn-bet-confirm:disabled { background: #334155; color: #64748b; box-shadow: none; cursor: not-allowed; transform: none; }
+    
+        #video-volume-control{
+            position:fixed;bottom:20px;right:20px;z-index:1200;
+            background:rgba(15,23,42,.75);padding:10px 14px;border-radius:10px;
+            border:1px solid #475569;opacity:0;transition:opacity .3s ease;
+            pointer-events:none;display:flex;align-items:center;gap:10px;
+        }
+        #video-volume-control.visible{opacity:1;pointer-events:auto;}
+        #video-volume-slider,
+        #video-seek-slider { width:140px; }
+
+    </style>
+</head>
+<body>
+
+    <div id="easteregg-bg"></div>
+    <video id="easteregg-video"></video>
+
+    
+    <div id="video-volume-control">
+        🔊 <input type="range" id="video-volume-slider" min="0" max="100" value="100">
+        <input type="range" id="video-seek-slider" min="0" max="100" value="0" disabled>
+    </div>
+
+    <div class="deck-toggle-tab" onclick="toggleSidebar()">📋 Deck-Tracker</div>
+
+    <div id="deck-sidebar" class="deck-sidebar">
+        <div class="sidebar-header">
+            <h2>Deck-Tracker</h2>
+            <button class="close-sidebar-btn" onclick="toggleSidebar()">✕</button>
+        </div>
+        <div class="tracker-section-title">Zahlenkarten</div>
+        <div id="tracker-numbers" class="tracker-grid"></div>
+        <div class="tracker-section-title">Sonderkarten</div>
+        <div id="tracker-specials" class="tracker-grid"></div>
+    </div>
+
+    <div id="debug-tab" class="debug-toggle-tab" onclick="toggleDebugSidebar()">⚙️ Medien</div>
+    <div id="debug-sidebar" class="debug-sidebar">
+        <div class="sidebar-header">
+            <h2>Medien Setup</h2>
+            <button class="close-sidebar-btn" onclick="toggleDebugSidebar()">✕</button>
+        </div>
+        
+        <div class="tracker-section-title">Diashow Steuerung</div>
+        <div class="debug-option">
+            <div class="media-controls-grid">
+                <button onclick="prevSlide()" style="background: linear-gradient(135deg, #475569, #334155); color: white;">⏮ Zurück</button>
+                <button id="btn-toggle-play" onclick="togglePlayPause()" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #0f172a;">⏸ Pause</button>
+                <button onclick="nextSlide()" style="background: linear-gradient(135deg, #475569, #334155); color: white;">Next ⏭</button>
+            </div>
+        </div>
+
+        <div class="tracker-section-title">Video Steuerung</div>
+        <div class="debug-option">
+            <div class="debug-option-row">
+                <span style="font-size: 0.85rem; color: #94a3b8;">Video-Wiedergabe</span>
+                <button id="btn-video-play" onclick="toggleVideoPlayback()" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 4px; box-shadow: none; background: #3b82f6; color: white;">⏸ Video Pausieren</button>
+            </div>
+        </div>
+
+        <div class="tracker-section-title">Filter & Sichtbarkeit</div>
+        <div class="debug-option">
+            <div class="filter-controls-grid">
+                <button onclick="clearImageFilters()" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white;">Filter Aus</button>
+                <button onclick="restoreImageFilters()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">Filter Ein</button>
+            </div>
+        </div>
+
+        <div class="tracker-section-title">Einstellungen</div>
+        <div class="debug-option">
+            <label for="slide-interval">Wechsel-Intervall (Sekunden)</label>
+            <input type="number" id="slide-interval" value="120" min="2" onchange="updateSlideshowSettings()">
+        </div>
+        <div class="debug-option">
+            <label for="slide-mode">Anzeigemodus</label>
+            <select id="slide-mode" onchange="updateSlideshowSettings()">
+                <option value="contain" selected>Anpassen (Ganzes Bild)</option>
+                <option value="cover">Füllen (Ausfüllen)</option>
+                <option value="stretch">Strecken</option>
+                <option value="center">Zentrieren</option>
+                <option value="tile">Kacheln</option>
+            </select>
+        </div>
+        <div class="debug-option">
+            <div class="debug-option-row">
+                <span style="font-size: 0.85rem; color: #94a3b8;">Zufällige Wiedergabe</span>
+                <input type="checkbox" id="slide-random" checked onchange="updateSlideshowSettings()">
+            </div>
+        </div>
+        
+        <div class="debug-option">
+            <div class="debug-option-row">
+                <span style="font-size: 0.85rem; color: #94a3b8;">
+                    Timer ignorieren bei Videos
+                </span>
+                <input type="checkbox"
+                    id="video-wait-mode"
+                    onchange="updateSlideshowSettings()">
+            </div>
+        </div>
+
+        <div class="debug-option">
+            <label for="min-video-duration" style="margin-bottom: 6px; display: block; font-size: 0.85rem; color: #94a3b8;">🎬 Mindestlänge Video</label>
+            <select id="min-video-duration" onchange="updateSlideshowSettings()" style="width: 100%; background: #0f172a; border: 1px solid #475569; color: #fff; padding: 6px; border-radius: 4px; box-sizing: border-box; font-family: inherit;">
+                <option value="0">Alle Videos zulassen</option>
+                <option value="60">&gt; 1 Minute</option>
+                <option value="120">&gt; 2 Minuten</option>
+                <option value="300">&gt; 5 Minuten</option>
+                <option value="480">&gt; 8 Minuten</option>
+                <option value="600">&gt; 10 Minuten</option>
+                <option value="900">&gt; 15 Minuten</option>
+                <option value="1200">&gt; 20 Minuten</option>
+                <option value="1800">&gt; 30 Minuten</option>
+                <option value="3600">&gt; 60 Minuten</option>
+            </select>
+            <div id="min-dur-info" style="font-size: 0.72rem; color: #64748b; margin-top: 4px; min-height: 14px;"></div>
+        </div>
+
+        <div class="debug-option">
+            <label for="max-video-duration" style="margin-bottom: 6px; display: block; font-size: 0.85rem; color: #94a3b8;">🎬 Maximallänge Video</label>
+            <select id="max-video-duration" onchange="updateSlideshowSettings()" style="width: 100%; background: #0f172a; border: 1px solid #475569; color: #fff; padding: 6px; border-radius: 4px; box-sizing: border-box; font-family: inherit;">
+                <option value="0">Keine Begrenzung</option>
+                <option value="60">&lt; 1 Minute</option>
+                <option value="120">&lt; 2 Minuten</option>
+                <option value="300">&lt; 5 Minuten</option>
+                <option value="480">&lt; 8 Minuten</option>
+                <option value="600">&lt; 10 Minuten</option>
+                <option value="900">&lt; 15 Minuten</option>
+                <option value="1200">&lt; 20 Minuten</option>
+                <option value="1800">&lt; 30 Minuten</option>
+                <option value="3600">&lt; 60 Minuten</option>
+            </select>
+            <div id="max-dur-info" style="font-size: 0.72rem; color: #64748b; margin-top: 4px; min-height: 14px;"></div>
+        </div>
+
+        <div class="tracker-section-title">Verlauf (History)</div>
+        <div class="debug-option">
+            <label for="history-limit">Maximale Verlaufsgröße</label>
+            <input type="number" id="history-limit" value="5" min="2" max="20" onchange="updateSlideshowSettings()">
+            <div id="history-container" class="history-panel"></div>
+        </div>
+        
+        <div class="debug-option">
+            <button onclick="triggerFilePicker()" style="width: 100%; padding: 8px; font-size: 0.9rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; box-shadow: none;">Dateien neu laden</button>
+        </div>
+    </div>
+
+    <button id="global-widget-btn" class="widget-toggle-btn" style="display:none;" onclick="enableWidgetMode()">🎔 Widget-Modus aktivieren</button>
+
+    <div id="main-game-wrapper">
+        <button id="btn-mute" class="mute-toggle-btn" onclick="toggleMute()">🔊 Ton an</button>
+        <div id="widget-header" onmousedown="dragStart(event)">::: FLIP 7 WIDGET - DRAG ME ::: <span onclick="disableWidgetMode()" style="color:var(--accent); cursor:pointer; margin-left:15px; font-weight:900;">[MAXIMIEREN]</span></div>
+
+        <h1>Flip 7</h1>
+        <button class="rules-toggle-btn" onclick="toggleRules()">Regeln ein-/ausblenden</button>
+        
+        <div id="rules-box" class="rules-container">
+            <p><strong>Ziel:</strong> Erreiche als Erster 200 Punkte. Wenn du eine Zahlenkarte ziehst, die du bereits besitzt, überkaufst du dich und verlierst alle Punkte der Runde. Hast du 7 verschiedene Zahlenkarten auf der Hand, verdoppeln sich deine Basispunkte automatisch!</p>
+            <div class="rules-grid">
+                <div>
+                    <p>⭐ <strong>Zweite Chance (3x):</strong> Fängt den nächsten Bust ab und wird verbraucht.</p>
+                    <p>7️⃣ <strong>Flip 7 (3x):</strong> Bringt sofort +7 Punkte aufs Konto.</p>
+                    <p>❄️ <strong>Freeze (3x):</strong> Friert den Zug sofort ein und sichert die Punkte.</p>
+                </div>
+                <div>
+                    <p>🌟 <strong>x2 (2x):</strong> Verdoppelt am Rundenende nur den reinen Wert aller Zahlenkarten.</p>
+                    <p>➕ <strong>+2 / +5 / +10 (je 3x):</strong> Addiert den jeweiligen Wert direkt zu deinen Rundenpunkten.</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="flip7-credits-bar">💰 Guthaben: <span id="flip7-credits-val">--</span> 🪙</div>
+
+        <div class="scoreboard">
+            <div id="box-player" class="score-box player active">
+                <div class="score-label">Du</div>
+                <div id="score-player" class="score-val">0</div>
+            </div>
+            <div id="box-bot" class="score-box bot">
+                <div class="score-label">Bot</div>
+                <div id="score-bot" class="score-val">0</div>
+            </div>
+        </div>
+
+        <div id="hand-counter" class="hand-counter">Zahlenkarten: 0/7 | Wert: 0 Punkte</div>
+
+        <div class="game-area">
+
+            <!-- ── WETT-INTERFACE ── -->
+            <div id="bet-overlay" class="bet-overlay">
+              <div class="bet-box">
+                <h3>💰 Match-Wette</h3>
+                <div class="bet-balance">Guthaben: <span id="flip7-bet-credits-val">--</span> 🪙</div>
+                <div class="bet-slider-row">
+                  <span>2</span>
+                  <input type="range" id="bet-slider" min="2" max="250" value="10"
+                    oninput="syncBetInput(this.value)">
+                  <span>250</span>
+                </div>
+                <div class="bet-amount-row">
+                  <input type="number" id="bet-input" class="bet-number-input" min="2" max="250" value="10"
+                    oninput="syncBetSlider(this.value)">
+                  <span class="bet-amount-label">🪙 Einsatz</span>
+                </div>
+                <div id="bet-warning" class="bet-warning"></div>
+                <button id="btn-bet-confirm" onclick="confirmBet()">✅ Wette bestätigen &amp; Match starten</button>
+              </div>
+            </div>
+            <!-- ── ENDE WETT-INTERFACE ── -->
+            <div id="status-banner" class="status-banner">Bereit fürs Match. Let's go!</div>
+            <div id="board-layout" class="board-layout">
+                <div>
+                    <div class="zone-title">Aktive Sonderkarten</div>
+                    <div id="special-zone" class="cards-container"></div>
+                </div>
+                <div>
+                    <div class="zone-title">Deine Zahlenkarten</div>
+                    <div id="number-zone" class="cards-container"></div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button id="btn-draw" onclick="playerDraw()">Karte ziehen</button>
+                <button id="btn-stop" onclick="playerStop()">Punkte sichern</button>
+            </div>
+
+            <div id="restart-container" class="restart-box">
+                <button onclick="resetGame()">Nächstes Match starten</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="secret-input-container" id="secret-container">
+        <input type="password" id="secret-code" placeholder="Easteregg Code..." oninput="checkSecretCode()">
+        <button id="secret-btn" onclick="triggerFilePicker()">Bilder / Videos auswählen</button>
+    </div>
+
+    <input type="file" id="hidden-file-picker" multiple accept="image/*,video/*" style="display: none;" onchange="handleSelectedFiles(this)">
+
+    <script>
+        const flip7api = {
+            sounds: {
+                draw: '',         
+                stop: '',         
+                bust: '',         
+                freeze: '',       
+                win: '',          
+                secondChance: ''  
+            }
+        };
+
+        // ── HUB GELD-SYSTEM ──
+        const FLIP7_HUB_KEY = 'gamehub_credits';
+        let flip7Credits = 1000;
+        let currentBet = 0;
+
+        function loadFlip7Credits() {
+            const v = localStorage.getItem(FLIP7_HUB_KEY);
+            flip7Credits = (v !== null && !isNaN(parseInt(v))) ? parseInt(v) : 1000;
+            return flip7Credits;
+        }
+        function saveFlip7Credits() {
+            localStorage.setItem(FLIP7_HUB_KEY, Math.max(0, Math.round(flip7Credits)));
+            updateFlip7CreditsDisplay();
+        }
+        function updateFlip7CreditsDisplay() {
+            const c = flip7Credits.toLocaleString('de-DE');
+            const el1 = document.getElementById('flip7-credits-val');
+            const el2 = document.getElementById('flip7-bet-credits-val');
+            if (el1) el1.textContent = c;
+            if (el2) el2.textContent = c;
+        }
+        function syncBetInput(val) {
+            document.getElementById('bet-input').value = val;
+            validateBet();
+        }
+        function syncBetSlider(val) {
+            const n = Math.max(2, Math.min(250, parseInt(val) || 2));
+            document.getElementById('bet-slider').value = n;
+            validateBet();
+        }
+        function validateBet() {
+            const input = document.getElementById('bet-input');
+            const warn  = document.getElementById('bet-warning');
+            const btn   = document.getElementById('btn-bet-confirm');
+            let v = parseInt(input.value);
+            loadFlip7Credits();
+            if (isNaN(v) || v < 2) { v = 2; input.value = 2; document.getElementById('bet-slider').value = 2; }
+            if (v > 250)            { v = 250; input.value = 250; document.getElementById('bet-slider').value = 250; }
+            if (flip7Credits < 2) {
+                warn.textContent = '⚠ Kein Guthaben mehr! Lade im Game Hub nach.';
+                btn.disabled = true;
+            } else if (v > flip7Credits) {
+                warn.textContent = `⚠ Einsatz übersteigt dein Guthaben (${flip7Credits.toLocaleString('de-DE')} 🪙)`;
+                btn.disabled = true;
+            } else {
+                warn.textContent = '';
+                btn.disabled = false;
+            }
+        }
+        function showBetOverlay() {
+            loadFlip7Credits();
+            updateFlip7CreditsDisplay();
+            const maxBet = Math.min(250, Math.max(0, flip7Credits));
+            const defBet = Math.min(10, maxBet);
+            const slider = document.getElementById('bet-slider');
+            const input  = document.getElementById('bet-input');
+            slider.max = 250; input.max = 250;
+            slider.value = defBet >= 2 ? defBet : 2;
+            input.value  = defBet >= 2 ? defBet : 2;
+            validateBet();
+            document.getElementById('bet-overlay').classList.remove('hidden');
+        }
+        function confirmBet() {
+            const v = parseInt(document.getElementById('bet-input').value);
+            loadFlip7Credits();
+            if (isNaN(v) || v < 2 || v > flip7Credits) { validateBet(); return; }
+            currentBet = v;
+            flip7Credits -= currentBet;
+            saveFlip7Credits();
+            document.getElementById('bet-overlay').classList.add('hidden');
+            toggleButtons(true);
+            updateBanner(`Einsatz: ${currentBet} 🪙 gesetzt — Viel Erfolg! Du bist am Zug.`);
+        }
+        function resolveBet(winner) {
+            if (currentBet <= 0) return;
+            if (winner === 'player') {
+                flip7Credits += currentBet * 2;
+                saveFlip7Credits();
+            }
+            currentBet = 0;
+        }
+        // Echtzeit-Sync: wenn Hub das Guthaben ändert
+        window.addEventListener('storage', e => {
+            if (e.key === FLIP7_HUB_KEY && e.newValue !== null) {
+                flip7Credits = parseInt(e.newValue);
+                updateFlip7CreditsDisplay();
+            }
+        });
+
+        let isMuted = false;
+
+        function toggleMute() {
+            const btn = document.getElementById('btn-mute');
+            isMuted = !isMuted;
+            if (isMuted) {
+                btn.innerText = "🔇 Stumm";
+                btn.style.background = "rgba(239, 68, 68, 0.4)";
+            } else {
+                btn.innerText = "🔊 Ton an";
+                btn.style.background = "rgba(30, 41, 59, 0.6)";
+            }
+        }
+
+        const SoundManager = {
+            ctx: null,
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            },
+            async play(type) {
+                if (isMuted) return;
+                this.init();
+                if (flip7api.sounds[type] && flip7api.sounds[type].trim() !== '') {
+                    try {
+                        const audio = new Audio(flip7api.sounds[type]);
+                        audio.play();
+                        return;
+                    } catch (e) {
+                        console.warn("Externer Sound fehlerhaft, nutze Synthesizer:", e);
+                    }
+                }
+
+                if (this.ctx.state === 'suspended') {
+                    await this.ctx.resume();
+                }
+
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                const now = this.ctx.currentTime;
+
+                switch(type) {
+                    case 'draw':
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(350, now);
+                        osc.frequency.exponentialRampToValueAtTime(600, now + 0.1);
+                        gain.gain.setValueAtTime(0.15, now);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+                        osc.start(now); osc.stop(now + 0.12);
+                        break;
+                    case 'stop':
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(523.25, now); 
+                        osc.frequency.setValueAtTime(659.25, now + 0.08); 
+                        osc.frequency.setValueAtTime(783.99, now + 0.16); 
+                        gain.gain.setValueAtTime(0.2, now);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                        osc.start(now); osc.stop(now + 0.3);
+                        break;
+                    case 'bust':
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(220, now);
+                        osc.frequency.linearRampToValueAtTime(100, now + 0.4);
+                        gain.gain.setValueAtTime(0.3, now);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+                        osc.start(now); osc.stop(now + 0.45);
+                        break;
+                    case 'freeze':
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(880, now);
+                        osc.frequency.exponentialRampToValueAtTime(440, now + 0.3);
+                        gain.gain.setValueAtTime(0.2, now);
+                        gain.gain.linearRampToValueAtTime(0.2, now + 0.2);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+                        osc.start(now); osc.stop(now + 0.35);
+                        break;
+                    case 'secondChance':
+                        osc.type = 'square';
+                        osc.frequency.setValueAtTime(440, now);
+                        osc.frequency.setValueAtTime(880, now + 0.1);
+                        gain.gain.setValueAtTime(0.15, now);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                        osc.start(now); osc.stop(now + 0.25);
+                        break;
+                    case 'win':
+                        osc.type = 'triangle';
+                        const notes = [523.25, 587.33, 659.25, 698.46, 783.99, 880.00, 987.77, 1046.50];
+                        notes.forEach((freq, idx) => {
+                            osc.frequency.setValueAtTime(freq, now + (idx * 0.08));
+                        });
+                        gain.gain.setValueAtTime(0.2, now);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.7);
+                        osc.start(now); osc.stop(now + 0.7);
+                        break;
+                }
+            }
+        };
+
+        let scores = { player: 0, bot: 0 };
+        let activeTurn = 'player';
+        let currentHand = [];
+        let hasSecondChance = false;
+        let isGameOver = false;
+        let botIsProcessing = false;
+        let turnId = 0; 
+
+        let deckCounts = {};
+        let cardPool = [];
+
+        // Diashow & Medien Variablen
+        let slideshowActive = false;
+        let isPaused = false;
+        let isFilterActive = true; 
+        let slideshowIntervalId = null;
+        let videoControlTimeout = null;
+        let videoVolume = 1.0;
+        let currentSlideIndex = -1;
+        let slideshowSettings = {
+            interval: 30000,
+            random: true,
+            mode: 'cover',
+            historyLimit: 5,
+            waitForVideoEnd: false,
+            minVideoDuration: 0,
+            maxVideoDuration: 0
+        };
+
+        let loadedMediaItems = []; 
+        let activeMediaItems = [];
+        let slideHistory = []; 
+
+        function generateDeck() {
+            cardPool = []; deckCounts = {};
+            for (let i = 0; i <= 12; i++) { deckCounts[i.toString()] = 6; }
+            deckCounts['Zweite Chance'] = 3; deckCounts['Flip 7'] = 3; deckCounts['Freeze'] = 3;
+            deckCounts['+2'] = 3; deckCounts['+5'] = 3; deckCounts['+10'] = 3; deckCounts['x2'] = 2;
+            rebuildCardPoolFromCounts(); renderTracker();
+        }
+
+        function rebuildCardPoolFromCounts() {
+            cardPool = [];
+            for (let card in deckCounts) {
+                for (let j = 0; j < deckCounts[card]; j++) { cardPool.push(card); }
+            }
+        }
+
+        const specialCardTypes = ['Zweite Chance', 'Flip 7', 'x2', 'Freeze', '+2', '+5', '+10'];
+
+        function toggleSidebar() { document.getElementById('deck-sidebar').classList.toggle('open'); }
+        function toggleDebugSidebar() { document.getElementById('debug-sidebar').classList.toggle('open'); }
+        function toggleRules() { document.getElementById('rules-box').classList.toggle('collapsed'); }
+
+        function renderTracker() {
+            const numContainer = document.getElementById('tracker-numbers');
+            const specContainer = document.getElementById('tracker-specials');
+            numContainer.innerHTML = ''; specContainer.innerHTML = '';
+
+            for (let i = 0; i <= 12; i++) { createTrackerItem(i.toString(), deckCounts[i.toString()], numContainer); }
+            specialCardTypes.forEach(spec => { createTrackerItem(spec, deckCounts[spec], specContainer); });
+        }
+
+        function createTrackerItem(label, count, container) {
+            const wrapper = document.createElement('div');
+            wrapper.className = `tracker-wrapper ${count === 0 ? 'empty' : ''}`;
+            wrapper.id = `tracker-wrapper-${label}`;
+
+            const countTop = document.createElement('div');
+            countTop.className = 'tracker-count-top';
+            countTop.innerText = `${count}`;
+            wrapper.appendChild(countTop);
+
+            const cardEl = document.createElement('div');
+            cardEl.classList.add('card');
+            cardEl.setAttribute('data-val', label);
+
+            if (specialCardTypes.includes(label)) cardEl.classList.add('special-card');
+
+            if (label === 'Zweite Chance') {
+                cardEl.classList.add('special-sc'); cardEl.innerHTML = `<div class="mini-num">⭐</div><div class="main-num">Chance</div><div class="mini-num bottom">⭐</div>`;
+            } else if (label === 'Flip 7') {
+                cardEl.classList.add('special-f7'); cardEl.innerHTML = `<div class="mini-num">7</div><div class="main-num">Flip 7</div><div class="mini-num bottom">7</div>`;
+            } else if (label === 'x2') {
+                cardEl.classList.add('special-x2'); cardEl.innerHTML = `<div class="mini-num">🪙</div><div class="main-num">x2</div><div class="mini-num bottom">🪙</div>`;
+            } else if (label === 'Freeze') {
+                cardEl.classList.add('special-fz'); cardEl.innerHTML = `<div class="mini-num">❄️</div><div class="main-num">Freeze</div><div class="mini-num bottom">❄️</div>`;
+            } else if (label === '+2' || label === '+5' || label === '+10') {
+                cardEl.classList.add('special-plus'); cardEl.innerHTML = `<div class="mini-num">➕</div><div class="main-num">${label}</div><div class="mini-num bottom">➕</div>`;
+            } else {
+                cardEl.innerHTML = `<div class="mini-num">${label}</div><div class="main-num">${label}</div><div class="mini-num bottom">${label}</div>`;
+            }
+
+            wrapper.appendChild(cardEl); container.appendChild(wrapper);
+        }
+
+        function updateTrackerValue(card) {
+            const count = deckCounts[card];
+            const wrapper = document.getElementById(`tracker-wrapper-${card}`);
+            if (wrapper) {
+                wrapper.querySelector('.tracker-count-top').innerText = `${count}`;
+                if (count === 0) wrapper.classList.add('empty'); else wrapper.classList.remove('empty');
+                wrapper.classList.add('changed');
+                setTimeout(() => wrapper.classList.remove('changed'), 400);
+            }
+        }
+
+        function calculateCurrentHandPoints() {
+            let numberPoints = 0, flatBonusPoints = 0, numberCardsCount = 0, x2Count = 0;
+            currentHand.forEach(card => {
+                if (card === 'Flip 7') flatBonusPoints += 7;
+                else if (card === '+2') flatBonusPoints += 2;
+                else if (card === '+5') flatBonusPoints += 5;
+                else if (card === '+10') flatBonusPoints += 10;
+                else if (card === 'x2') x2Count++;
+                else if (!specialCardTypes.includes(card)) { numberPoints += parseInt(card); numberCardsCount++; }
+            });
+
+            let numberMultiplier = 1;
+            let bonusActive = (numberCardsCount >= 7);
+            if (bonusActive) numberMultiplier *= 2;
+            if (x2Count > 0) numberMultiplier *= Math.pow(2, x2Count);
+
+            return { points: (numberPoints * numberMultiplier) + flatBonusPoints, numCount: numberCardsCount, isDoubled: numberMultiplier > 1, hasBonus: bonusActive };
+        }
+
+        function updateHandDisplay() {
+            const status = calculateCurrentHandPoints();
+            let extraText = status.hasBonus ? " 🌟 (7-KARTEN BONUS!)" : (status.isDoubled ? ` 🪙 (x2 AKTIV)` : "");
+            document.getElementById('hand-counter').innerText = `Zahlenkarten: ${status.numCount}/7 | Gesamtwert: ${status.points} Punkte${extraText}`;
+            updateTrackerHandMarks();
+        }
+
+        function updateTrackerHandMarks() {
+            const showMarks = (activeTurn === 'player' && !isGameOver);
+            for (let i = 0; i <= 12; i++) {
+                const wrapper = document.getElementById(`tracker-wrapper-${i}`);
+                if (wrapper) { wrapper.classList.remove('in-hand'); if (showMarks && currentHand.includes(i.toString())) wrapper.classList.add('in-hand'); }
+            }
+            specialCardTypes.forEach(spec => {
+                const wrapper = document.getElementById(`tracker-wrapper-${spec}`);
+                if (wrapper) { wrapper.classList.remove('in-hand', 'in-hand-safe'); if (showMarks && currentHand.includes(spec)) wrapper.classList.add('in-hand-safe'); }
+            });
+        }
+
+        function updateUI() {
+            document.getElementById('score-player').innerText = scores.player;
+            document.getElementById('score-bot').innerText = scores.bot;
+            document.getElementById('box-player').classList.remove('active');
+            document.getElementById('box-bot').classList.remove('active');
+            if (!isGameOver) {
+                if (activeTurn === 'player') document.getElementById('box-player').classList.add('active');
+                else document.getElementById('box-bot').classList.add('active');
+            }
+            updateHandDisplay();
+        }
+
+        function createCardElement(cardValue, elementId) {
+            const cardEl = document.createElement('div');
+            cardEl.classList.add('card'); cardEl.id = elementId; cardEl.setAttribute('data-val', cardValue);
+            if (specialCardTypes.includes(cardValue)) cardEl.classList.add('special-card');
+
+            if (cardValue === 'Zweite Chance') {
+                cardEl.classList.add('special-sc'); cardEl.innerHTML = `<div class="mini-num">⭐</div><div class="main-num">Zweite Chance</div><div class="mini-num bottom">⭐</div>`;
+            } else if (cardValue === 'Flip 7') {
+                cardEl.classList.add('special-f7'); cardEl.innerHTML = `<div class="mini-num">7</div><div class="main-num">Flip 7</div><div class="mini-num bottom">7</div>`;
+            } else if (cardValue === 'x2') {
+                cardEl.classList.add('special-x2'); cardEl.innerHTML = `<div class="mini-num">🪙</div><div class="main-num">x2</div><div class="mini-num bottom">🪙</div>`;
+            } else if (cardValue === 'Freeze') {
+                cardEl.classList.add('special-fz'); cardEl.innerHTML = `<div class="mini-num">❄️</div><div class="main-num">Freeze</div><div class="mini-num bottom">❄️</div>`;
+            } else if (cardValue === '+2' || cardValue === '+5' || cardValue === '+10') {
+                cardEl.classList.add('special-plus'); cardEl.innerHTML = `<div class="mini-num">➕</div><div class="main-num">${cardValue}</div><div class="mini-num bottom">➕</div>`;
+            } else {
+                cardEl.innerHTML = `<div class="mini-num">${cardValue}</div><div class="main-num">${cardValue}</div><div class="mini-num bottom">${cardValue}</div>`;
+            }
+            return cardEl;
+        }
+
+        function triggerSpecialUseAnimation(cardType) {
+            if (cardType !== 'Zweite Chance') return;
+            const zone = document.getElementById('special-zone');
+            const cards = zone.querySelectorAll('.card');
+            for (let card of cards) {
+                if (card.getAttribute('data-val') === cardType && !card.classList.contains('special-used')) { card.classList.add('special-used'); break; }
+            }
+        }
+
+        function executeDraw() {
+            if (cardPool.length === 0) { updateBanner("Das Deck ist leer! Mische neues Deck..."); generateDeck(); }
+            const randomIndex = Math.floor(Math.random() * cardPool.length);
+            const drawnCard = cardPool[randomIndex];
+            
+            deckCounts[drawnCard]--; updateTrackerValue(drawnCard); rebuildCardPoolFromCounts();
+
+            const numZone = document.getElementById('number-zone');
+            const specialZone = document.getElementById('special-zone');
+            const uniqueId = 'card-' + Math.random().toString(36).substr(2, 9);
+            const cardEl = createCardElement(drawnCard, uniqueId);
+
+            if (specialCardTypes.includes(drawnCard)) specialZone.appendChild(cardEl); else numZone.appendChild(cardEl);
+
+            SoundManager.play('draw');
+
+            if (drawnCard === 'Flip 7') { currentHand.push(drawnCard); updateBanner(activeTurn === 'player' ? "Flip 7 aufgedeckt! Bringt sofort +7 Punkte!" : "Der Bot zieht Flip 7!"); updateHandDisplay(); return { status: 'continue' }; }
+            if (drawnCard === 'Zweite Chance') { hasSecondChance = true; currentHand.push(drawnCard); updateBanner(activeTurn === 'player' ? "Zweite Chance bereitgelegt!" : "Der Bot hält eine Zweite Chance."); updateHandDisplay(); return { status: 'continue' }; }
+            if (drawnCard === 'x2') { currentHand.push(drawnCard); updateBanner(activeTurn === 'player' ? "Goldener Verdoppler!" : "Der Bot zieht ein x2!"); updateHandDisplay(); return { status: 'continue' }; }
+            if (drawnCard === 'Freeze') { currentHand.push(drawnCard); updateBanner(activeTurn === 'player' ? "❄️ FREEZE! ❄️" : "❄️ Der Bot wurde eingefroren! ❄️"); updateHandDisplay(); return { status: 'freeze' }; }
+            if (drawnCard === '+2' || drawnCard === '+5' || drawnCard === '+10') { currentHand.push(drawnCard); updateBanner(activeTurn === 'player' ? `Sonderkarte ${drawnCard}!` : `Der Bot zieht eine ${drawnCard}.`); updateHandDisplay(); return { status: 'continue' }; }
+
+            if (currentHand.includes(drawnCard)) {
+                if (hasSecondChance) {
+                    hasSecondChance = false; triggerSpecialUseAnimation('Zweite Chance');
+                    cardEl.style.opacity = '0.4'; cardEl.style.border = '3px dashed #ef4444';
+                    updateBanner(activeTurn === 'player' ? "Gerettet! Zweite Chance fängt Bust ab." : "Bot verbraucht Zweite Chance.");
+                    SoundManager.play('secondChance');
+                    updateHandDisplay(); return { status: 'continue' };
+                } else {
+                    updateBanner(activeTurn === 'player' ? `Überkauft! Die doppelte ${drawnCard} beendet deinen Zug.` : `Der Bot hat sich überkauft!`);
+                    updateHandDisplay(); return { status: 'bust' };
+                }
+            }
+            currentHand.push(drawnCard); updateHandDisplay(); return { status: 'continue' };
+        }
+
+        function updateBanner(text) { document.getElementById('status-banner').innerText = text; }
+        function playerDraw() { if (activeTurn !== 'player' || isGameOver) return; let r = executeDraw(); if (r.status === 'bust') handleBust(); else if (r.status === 'freeze') handleFreeze(); }
+        function playerStop() { if (activeTurn !== 'player' || isGameOver) return; SoundManager.play('stop'); savePoints('player'); }
+
+        function handleBust() {
+            toggleButtons(false); botIsProcessing = false; const bustingTurn = activeTurn; const myTurnId = turnId;
+            document.getElementById('board-layout').classList.add('bust');
+            SoundManager.play('bust');
+            setTimeout(() => { if (turnId !== myTurnId) return; clearZone(); switchTurn((bustingTurn === 'player') ? 'bot' : 'player'); }, 2200);
+        }
+
+        function handleFreeze() {
+            toggleButtons(false); botIsProcessing = false; const frozenTurn = activeTurn; const myTurnId = turnId;
+            document.getElementById('board-layout').classList.add('freeze-anim');
+            SoundManager.play('freeze');
+            setTimeout(() => { if (turnId !== myTurnId) return; document.getElementById('board-layout').classList.remove('freeze-anim'); savePoints(frozenTurn); }, 2000);
+        }
+
+        function savePoints(turn = activeTurn) {  
+            const handStatus = calculateCurrentHandPoints(); scores[turn] += handStatus.points; updateUI();
+            if (scores[turn] >= 200) { endGame(turn); return; }
+            document.getElementById('board-layout').classList.add('collect'); toggleButtons(false);
+            const myTurnId = turnId;
+            setTimeout(() => { if (turnId !== myTurnId) return; clearZone(); switchTurn((turn === 'player') ? 'bot' : 'player'); }, 800);
+        }
+
+        function switchTurn(nextTurn) {
+            if (isGameOver) return; turnId++; activeTurn = nextTurn; currentHand = []; hasSecondChance = false; updateUI();
+            if (activeTurn === 'player') { botIsProcessing = false; updateBanner("Du bist am Zug."); toggleButtons(true); }
+            else {
+                updateBanner("Der Bot ist dran..."); toggleButtons(false); botIsProcessing = true; const myTurnId = turnId;
+                setTimeout(() => { if (turnId !== myTurnId) return; botLogic(); }, 1200);
+            }
+        }
+
+        function botLogic() {
+            if (activeTurn !== 'bot' || isGameOver || !botIsProcessing) return;
+            if (cardPool.length === 0) { botIsProcessing = false; updateBanner("Deck leer! Bot sichert."); setTimeout(() => { SoundManager.play('stop'); savePoints('bot'); }, 1500); return; }
+            let r = executeDraw();
+            if (r.status === 'bust') { handleBust(); return; } if (r.status === 'freeze') { handleFreeze(); return; }
+            const handStatus = calculateCurrentHandPoints();
+            let uniqueCardsCount = new Set(currentHand.filter(c => !specialCardTypes.includes(c))).size;
+            let safeToDraw = hasSecondChance || uniqueCardsCount <= 4 || (handStatus.points < 35 && handStatus.numCount < 6);
+            if (activeTurn !== 'bot' || isGameOver || !botIsProcessing) return;
+            const myTurnId = turnId;
+            if (safeToDraw) { updateBanner("Bot zieht noch eine Karte..."); setTimeout(() => { if (turnId !== myTurnId) return; botLogic(); }, 1500); }
+            else { botIsProcessing = false; updateBanner(`Bot beendet seinen Zug.`); setTimeout(() => { if (turnId !== myTurnId) return; SoundManager.play('stop'); savePoints('bot'); }, 1500); }
+        }
+
+        function clearZone() { document.getElementById('special-zone').innerHTML = ''; document.getElementById('number-zone').innerHTML = ''; document.getElementById('board-layout').className = 'board-layout'; }
+        function toggleButtons(enable) { document.getElementById('btn-draw').disabled = !enable; document.getElementById('btn-stop').disabled = !enable; }
+
+        function endGame(winner) {
+            isGameOver = true; botIsProcessing = false; updateUI(); toggleButtons(false);
+            const betAmount = currentBet;
+            resolveBet(winner);
+            if (winner === 'player') updateBanner(`🎉 Gewonnen! Du hast die 200 Punkte geknackt! +${betAmount} 🪙 Gewinn! 🎉`);
+            else updateBanner(`🤖 Der Bot hat gewonnen. Einsatz von ${betAmount} 🪙 verloren. 🤖`);
+            SoundManager.play('win');
+            document.getElementById('restart-container').classList.add('visible');
+        }
+
+        function resetGame() {
+            scores = { player: 0, bot: 0 }; isGameOver = false; botIsProcessing = false; activeTurn = 'player'; currentHand = []; hasSecondChance = false; turnId = 0;
+            generateDeck(); clearZone(); updateUI(); toggleButtons(false); updateBanner("Setze deine Wette für das neue Match!");
+            document.getElementById('restart-container').classList.remove('visible');
+            showBetOverlay();
+        }
+
+        // ── EASTEREGG & MEDIA LOGIK (IMAGE & VIDEO) ──
+        function checkSecretCode() {
+            const input = document.getElementById('secret-code');
+            if (input.value = '"smacks" || "762257" || "FurryFemboy" || "Sex" || "Yiff" || "yiff" || "e621" || "E621"') { input.style.display = 'none'; document.getElementById('secret-btn').style.display = 'block'; }
+        }
+
+        function triggerFilePicker() { document.getElementById('hidden-file-picker').click(); }
+
+        async function createVideoThumbnail(file) {
+            return new Promise(resolve => {
+                const video = document.createElement('video');
+                video.preload = 'metadata';
+                video.muted = true;
+                video.playsInline = true;
+                const objectUrl = URL.createObjectURL(file);
+                let captured = false;
+
+                const cleanUp = () => {
+                    video.removeEventListener('loadedmetadata', onLoadedMetadata);
+                    video.removeEventListener('seeked', onSeeked);
+                    video.removeEventListener('error', onError);
+                    video.src = '';
+                    URL.revokeObjectURL(objectUrl);
+                };
+
+                const captureFrame = () => {
+                    if (captured || !video.videoWidth || !video.videoHeight) {
+                        cleanUp();
+                        resolve(null);
+                        return;
+                    }
+                    const maxWidth = 240;
+                    const maxHeight = 160;
+                    const ratio = Math.min(maxWidth / video.videoWidth, maxHeight / video.videoHeight, 1);
+                    const canvas = document.createElement('canvas');
+                    canvas.width = Math.max(1, Math.round(video.videoWidth * ratio));
+                    canvas.height = Math.max(1, Math.round(video.videoHeight * ratio));
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    captured = true;
+                    cleanUp();
+                    resolve(canvas.toDataURL('image/jpeg', 0.7));
+                };
+
+                const onLoadedMetadata = () => {
+                    const seekTime = Math.min(0.1, video.duration * 0.05);
+                    video.currentTime = seekTime;
+                };
+                const onSeeked = () => { captureFrame(); };
+                const onError = () => { cleanUp(); resolve(null); };
+
+                video.addEventListener('loadedmetadata', onLoadedMetadata);
+                video.addEventListener('seeked', onSeeked);
+                video.addEventListener('error', onError);
+                video.src = objectUrl;
+            });
+        }
+
+        async function handleSelectedFiles(inputElement) {
+            const files = inputElement.files;
+            if (files.length === 0) return;
+            
+            loadedMediaItems.forEach(item => URL.revokeObjectURL(item.url));
+            loadedMediaItems = []; activeMediaItems = []; slideHistory = []; currentSlideIndex = -1;
+
+            updateBanner(`⏳ Metadaten werden geladen...`);
+
+            const loadPromises = [];
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const isVideo = file.type.startsWith('video/');
+                const url = URL.createObjectURL(file);
+                const item = { url, isVideo, name: file.name, duration: isVideo ? null : Infinity, thumbUrl: url };
+                loadedMediaItems.push(item);
+
+                if (isVideo) {
+                    const p = new Promise(async resolve => {
+                        const tmp = document.createElement('video');
+                        tmp.preload = 'metadata';
+                        tmp.onloadedmetadata = async () => {
+                            item.duration = tmp.duration;
+                            const thumb = await createVideoThumbnail(file);
+                            if (thumb) item.thumbUrl = thumb;
+                            resolve();
+                        };
+                        tmp.onerror = () => { item.duration = 0; resolve(); };
+                        tmp.src = url;
+                    });
+                    loadPromises.push(p);
+                }
+            }
+
+            await Promise.all(loadPromises);
+
+            document.getElementById('secret-container').style.display = 'none';
+            rebuildActiveMediaItems();
+            activateEasteregg();
+            const skipped = loadedMediaItems.length - activeMediaItems.length;
+            const skipNote = skipped > 0 ? ` (${skipped} Video${skipped > 1 ? 's' : ''} zu kurz – gefiltert)` : '';
+            updateBanner(`🔓 ${activeMediaItems.length} Medien aktiv${skipNote}. Diashow gestartet!`);
+        }
+
+        function rebuildActiveMediaItems() {
+            const minDur = slideshowSettings.minVideoDuration;
+            const maxDur = slideshowSettings.maxVideoDuration;
+            activeMediaItems = loadedMediaItems.filter(item => {
+                if (!item.isVideo) return true;
+                if (item.duration === null) return true;
+                if (minDur > 0 && item.duration < minDur) return false;
+                if (maxDur > 0 && item.duration > maxDur) return false;
+                return true;
+            });
+            slideHistory = [];
+            currentSlideIndex = -1;
+        }
+
+        function activateEasteregg() {
+            slideshowActive = true; isPaused = false; isFilterActive = true;
+            document.body.style.background = "radial-gradient(circle at center, rgba(30, 41, 59, 0.85) 0%, rgba(15, 23, 42, 0.95) 100%)";
+            document.getElementById('debug-tab').style.display = 'block';
+            document.getElementById('global-widget-btn').style.display = 'inline-block';
+            applySlideshowCSSMode();
+            showNextMedia();
+        }
+
+        function scheduleNextSlide() {
+
+            if (slideshowIntervalId)
+                clearTimeout(slideshowIntervalId);
+
+            const currentItem =
+                activeMediaItems[currentSlideIndex];
+
+            const video = document.getElementById('easteregg-video');
+            if (!currentItem) return;
+
+            if (currentItem.isVideo && slideshowSettings.waitForVideoEnd) {
+                if (video) {
+                    video.onended = () => {
+                        if (isPaused) return;
+                        showNextMedia();
+                        scheduleNextSlide();
+                    };
+                }
+                return;
+            }
+
+            if (video) {
+                video.onended = null;
+            }
+
+            const duration =
+                currentItem.isVideo
+                    ? 120000
+                    : slideshowSettings.interval;
+
+            slideshowIntervalId = setTimeout(() => {
+                if (isPaused) return;
+                showNextMedia();
+                scheduleNextSlide();
+            }, duration);
+        }
+
+        function startSlideshow() {
+            if (slideshowIntervalId) clearTimeout(slideshowIntervalId);
+            if (!isPaused) {
+                scheduleNextSlide();
+            }
+        }
+
+        function togglePlayPause() {
+            const btn = document.getElementById('btn-toggle-play');
+            if (isPaused) {
+                isPaused = false; btn.innerText = "⏸ Pause"; startSlideshow();
+            } else {
+                isPaused = true; btn.innerText = "▶ Play"; if (slideshowIntervalId) clearInterval(slideshowIntervalId);
+            }
+        }
+
+        function toggleVideoPlayback() {
+            const video = document.getElementById('easteregg-video');
+            const btn = document.getElementById('btn-video-play');
+            if (video.style.display !== 'none') {
+                if (video.paused) { video.play(); btn.innerText = "⏸ Video Pausieren"; }
+                else { video.pause(); btn.innerText = "▶ Video Abspielen"; }
+            }
+        }
+
+        function updateSlideshowSettings() {
+            const intervalInput = document.getElementById('slide-interval');
+            const randomInput = document.getElementById('slide-random');
+            const modeSelect = document.getElementById('slide-mode');
+            const limitInput = document.getElementById('history-limit');
+            const waitForVideoInput = document.getElementById('video-wait-mode');
+            const minDurSelect = document.getElementById('min-video-duration');
+            
+            slideshowSettings.interval = Math.max(2, parseInt(intervalInput.value)) * 1000;
+            slideshowSettings.random = randomInput.checked;
+            slideshowSettings.mode = modeSelect.value;
+            slideshowSettings.historyLimit = Math.max(2, parseInt(limitInput.value));
+            slideshowSettings.waitForVideoEnd = waitForVideoInput.checked;
+            slideshowSettings.minVideoDuration = parseInt(minDurSelect.value);
+            slideshowSettings.maxVideoDuration = parseInt(document.getElementById('max-video-duration').value);
+
+            rebuildActiveMediaItems();
+            
+            const total = loadedMediaItems.filter(i => i.isVideo).length;
+            const active = activeMediaItems.filter(i => i.isVideo).length;
+            const filtered = total - active;
+            if (filtered > 0) {
+                updateBanner(`🎬 ${filtered} Video${filtered > 1 ? 's' : ''} gefiltert. ${active} Video${active !== 1 ? 's' : ''} + ${activeMediaItems.filter(i => !i.isVideo).length} Bilder aktiv.`);
+                document.getElementById('min-dur-info').textContent = `⚠ ${filtered} Video${filtered > 1 ? 's' : ''} herausgefiltert`;
+                document.getElementById('min-dur-info').style.color = '#f59e0b';
+                document.getElementById('max-dur-info').textContent = '';
+            } else {
+                const anyVideos = loadedMediaItems.some(i => i.isVideo);
+                document.getElementById('min-dur-info').textContent = anyVideos ? '✔ Alle Videos erfüllen die Kriterien' : '';
+                document.getElementById('min-dur-info').style.color = '#22c55e';
+                document.getElementById('max-dur-info').textContent = '';
+            }
+
+            applySlideshowCSSMode();
+            renderHistoryPanel();
+            if (slideshowActive && !isPaused) startSlideshow();
+        }
+
+        function applySlideshowCSSMode() {
+            const bgElement = document.getElementById('easteregg-bg');
+            const videoElement = document.getElementById('easteregg-video');
+            const elements = [bgElement, videoElement];
+
+            elements.forEach(el => {
+                if (!el) return;
+                if (el === bgElement) {
+                    el.style.backgroundPosition = 'center'; el.style.backgroundRepeat = 'no-repeat';
+                    if (slideshowSettings.mode === 'cover') el.style.backgroundSize = 'cover';
+                    else if (slideshowSettings.mode === 'contain') el.style.backgroundSize = 'contain';
+                    else if (slideshowSettings.mode === 'stretch') { el.style.backgroundSize = '100% 100%'; el.style.backgroundPosition = 'top left'; }
+                    else if (slideshowSettings.mode === 'center') el.style.backgroundSize = 'auto';
+                    else if (slideshowSettings.mode === 'tile') { el.style.backgroundSize = 'auto'; el.style.backgroundRepeat = 'repeat'; el.style.backgroundPosition = 'top left'; }
+                } else if (el === videoElement) {
+                    if (slideshowSettings.mode === 'contain') el.style.objectFit = 'contain';
+                    else if (slideshowSettings.mode === 'stretch') el.style.objectFit = 'fill';
+                    else el.style.objectFit = 'cover';
+                }
+            });
+        }
+
+        // Filter komplett ausschalten (Volle Leuchtkraft)
+        function clearImageFilters() {
+            isFilterActive = false;
+            applyVisibilityState();
+            updateBanner("Bild-Filter aufgehoben. Volle Deckkraft aktiv!");
+        }
+
+        // Filter wieder einschalten (Erhöht die Lesbarkeit des Spiels)
+        function restoreImageFilters() {
+            isFilterActive = true;
+            applyVisibilityState();
+            updateBanner("Filter reaktiviert. Spielbereich optimal lesbar.");
+        }
+
+        function applyVisibilityState() {
+            const bgElement = document.getElementById('easteregg-bg');
+            const videoElement = document.getElementById('easteregg-video');
+            const targetOpacity = isFilterActive ? '0.22' : '1.0';
+
+            if (bgElement.style.display !== 'none' && bgElement.style.backgroundImage !== '') {
+                bgElement.style.opacity = targetOpacity;
+            }
+            if (videoElement.style.display !== 'none') {
+                videoElement.style.opacity = targetOpacity;
+            }
+
+            if (!isFilterActive) {
+                document.body.style.background = 'none';
+                document.body.style.backgroundColor = '#0f172a';
+            } else {
+                document.body.style.background = "radial-gradient(circle at center, rgba(30, 41, 59, 0.85) 0%, rgba(15, 23, 42, 0.95) 100%)";
+            }
+        }
+
+        
+        function showVideoVolumeControl() {
+            const c=document.getElementById('video-volume-control');
+            const video = document.getElementById('easteregg-video');
+            if (video && video.style.display !== 'none') {
+                updateVideoSeekBar();
+                c.classList.add('visible');
+                clearTimeout(videoControlTimeout);
+                videoControlTimeout = setTimeout(() => c.classList.remove('visible'), 3000);
+            }
+        }
+
+        function updateVideoSeekBar() {
+            const video = document.getElementById('easteregg-video');
+            const slider = document.getElementById('video-seek-slider');
+            if (!video || !slider) return;
+            if (video.duration && !isNaN(video.duration) && video.duration > 0) {
+                slider.disabled = false;
+                slider.value = Math.floor((video.currentTime / video.duration) * 100);
+            } else {
+                slider.disabled = true;
+                slider.value = 0;
+            }
+        }
+
+        document.addEventListener('mousemove', () => {
+            const video = document.getElementById('easteregg-video');
+            if (video.style.display !== 'none') showVideoVolumeControl();
+        });
+
+        document.getElementById('video-seek-slider').addEventListener('input', function() {
+            const video = document.getElementById('easteregg-video');
+            if (!video || !video.duration || isNaN(video.duration)) return;
+            video.currentTime = video.duration * (this.value / 100);
+            showVideoVolumeControl();
+        });
+
+        document.getElementById('easteregg-video').addEventListener('timeupdate', updateVideoSeekBar);
+        document.getElementById('easteregg-video').addEventListener('loadedmetadata', updateVideoSeekBar);
+
+        function showMediaByIndex(index) {
+            const bgElement = document.getElementById('easteregg-bg');
+            const videoElement = document.getElementById('easteregg-video');
+            if (activeMediaItems.length === 0 || index < 0 || index >= activeMediaItems.length) return;
+            
+            currentSlideIndex = index;
+            const item = activeMediaItems[index];
+            const targetOpacity = isFilterActive ? '0.22' : '1.0';
+            
+            // Ausblenden für weichen Übergang
+            bgElement.style.opacity = '0';
+            videoElement.style.opacity = '0';
+
+            setTimeout(() => {
+                if (item.isVideo) {
+                    bgElement.style.display = 'none';
+                    bgElement.style.backgroundImage = 'none';
+                    
+                    videoElement.style.display = 'block';
+                    videoElement.src = item.url;
+                    videoElement.volume = videoVolume;
+                    videoElement.style.opacity = targetOpacity;
+                    videoElement.loop = !slideshowSettings.waitForVideoEnd;
+
+                    if (slideshowSettings.waitForVideoEnd) {
+                        videoElement.onended = () => {
+                            if (isPaused) return;
+                            showNextMedia();
+                            scheduleNextSlide();
+                        };
+                    } else {
+                        videoElement.onended = null;
+                    }
+
+                    videoElement.play().catch(e => console.log("Autoplay blockiert:", e));
+                    document.getElementById('btn-video-play').innerText = "⏸ Video Pausieren";
+                    showVideoVolumeControl();
+                } else {
+                    videoElement.pause();
+                    videoElement.style.display = 'none';
+                    videoElement.onended = null;
+                    document.getElementById('video-volume-control').classList.remove('visible');
+                    
+                    bgElement.style.display = 'block';
+                    bgElement.style.backgroundImage = `url('${item.url}')`;
+                    bgElement.style.opacity = targetOpacity;
+                }
+            }, 400);
+
+            if (slideHistory.length === 0 || slideHistory[slideHistory.length - 1] !== index) {
+                slideHistory.push(index);
+                if (slideHistory.length > slideshowSettings.historyLimit) { slideHistory.shift(); }
+                renderHistoryPanel();
+            }
+            if (!isPaused) scheduleNextSlide();
+        }
+
+        function showNextMedia() {
+            if (activeMediaItems.length === 0) return;
+            let nextIndex = 0;
+            if (slideshowSettings.random) { nextIndex = Math.floor(Math.random() * activeMediaItems.length); }
+            else { nextIndex = (currentSlideIndex + 1) % activeMediaItems.length; }
+            showMediaByIndex(nextIndex);
+        }
+
+        function nextSlide() { showNextMedia(); }
+
+        function prevSlide() {
+            if (slideHistory.length > 1) {
+                slideHistory.pop();
+                const prevIndex = slideHistory[slideHistory.length - 1];
+                showMediaByIndex(prevIndex);
+            } else if (activeMediaItems.length > 0 && currentSlideIndex >= 0) {
+                const prevIndex = (currentSlideIndex - 1 + activeMediaItems.length) % activeMediaItems.length;
+                showMediaByIndex(prevIndex);
+            }
+        }
+
+        function renderHistoryPanel() {
+            const container = document.getElementById('history-container'); if (!container) return;
+            container.innerHTML = '';
+            for (let i = slideHistory.length - 1; i >= 0; i--) {
+                const mediaIdx = slideHistory[i];
+                const item = activeMediaItems[mediaIdx];
+                if (!item) continue;
+                const thumb = document.createElement('div');
+                thumb.className = 'history-thumb';
+
+                if (item.thumbUrl) {
+                    thumb.style.backgroundImage = `url('${item.thumbUrl}')`;
+                    thumb.innerText = '';
+                } else if (item.isVideo) {
+                    thumb.innerText = "🎬 VIDEO";
+                } else {
+                    thumb.style.backgroundImage = `url('${item.url}')`;
+                }
+
+                thumb.title = `${item.name} aufrufen`;
+                thumb.onclick = () => { showMediaByIndex(mediaIdx); if (slideshowActive && !isPaused) startSlideshow(); };
+                container.appendChild(thumb);
+            }
+        }
+
+        // ── WIDGET WINDOW CONTROL LOGIK (DRAG & DROP) ──
+        let dragObj = null; let offsetX = 0; let offsetY = 0;
+        
+        function enableWidgetMode() {
+            const wrapper = document.getElementById('main-game-wrapper');
+            document.getElementById('global-widget-btn').style.display = 'none';
+            wrapper.classList.add('widget-mode');
+            wrapper.style.position = 'fixed'; wrapper.style.top = '20px'; wrapper.style.right = '20px'; wrapper.style.left = 'auto';
+            wrapper.style.padding = '10px';
+        }
+
+        function disableWidgetMode() {
+            const wrapper = document.getElementById('main-game-wrapper');
+            wrapper.classList.remove('widget-mode');
+            wrapper.style.position = 'relative'; wrapper.style.top = 'auto'; wrapper.style.right = 'auto'; wrapper.style.left = 'auto';
+            wrapper.style.padding = '0 60px';
+            document.getElementById('global-widget-btn').style.display = 'inline-block';
+        }
+
+        function dragStart(e) {
+            dragObj = document.getElementById('main-game-wrapper');
+            offsetX = e.clientX - dragObj.getBoundingClientRect().left;
+            offsetY = e.clientY - dragObj.getBoundingClientRect().top;
+            document.addEventListener('mousemove', dragMove);
+            document.addEventListener('mouseup', dragEnd);
+            e.preventDefault();
+        }
+        function dragMove(e) {
+            if (!dragObj) return;
+            dragObj.style.left = (e.clientX - offsetX) + 'px';
+            dragObj.style.top = (e.clientY - offsetY) + 'px';
+            dragObj.style.right = 'auto';
+        }
+        function dragEnd() { dragObj = null; document.removeEventListener('mousemove', dragMove); document.removeEventListener('mouseup', dragEnd); }
+
+        generateDeck();
+        // ── HUB SYNC INIT: Credits laden + Wett-Overlay beim ersten Match ──
+        loadFlip7Credits();
+        updateFlip7CreditsDisplay();
+        toggleButtons(false);
+        showBetOverlay();
+    
+        document.getElementById('video-volume-slider').addEventListener('input', function(){
+            videoVolume=this.value/100;
+            document.getElementById('easteregg-video').volume=videoVolume;
+            showVideoVolumeControl();
+        });
+</script>
+</body>
+</html>

@@ -1,0 +1,2707 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sabaton Heavy Metal Slots</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+
+    :root {
+      --gold:    #d4a017;
+      --gold-lt: #f5c842;
+      --dark:    #09090e;
+      --panel:   #10141a;
+      --border:  #1e2a35;
+      --text:    #c8d4de;
+      --green:   #27c76e;
+      --purple:  #9050cc;
+      --blue:    #2e86c1;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-image:
+        url('menu-bg.jpg'),
+        url('basegame-bg.jpg');
+      background-size: 100% 100%, cover;
+      background-position: center 12%, center center;
+      background-repeat: no-repeat;
+      color: var(--text);
+      font-family: 'Oswald', 'Impact', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 16px;
+      gap: 12px;
+      overflow-x: hidden;
+    }
+
+    /* ── ADMIN ── */
+    .admin {
+      background: rgba(16,20,26,0.9);
+      border: 1px dashed #2a3a4a;
+      padding: 10px 18px;
+      border-radius: 4px;
+      display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: center;
+      font-size: 0.82rem; color: #7a8a9a;
+    }
+    .admin label { display: flex; align-items: center; gap: 6px; }
+    .admin select, .admin input {
+      background: #06080a; border: 1px solid #1e2a35; color: #e0e6ed;
+      padding: 4px 8px; border-radius: 3px; font-family: 'Share Tech Mono', monospace;
+    }
+    .admin button {
+      background: #1e2a35; border: 1px solid var(--gold); color: var(--gold);
+      padding: 4px 12px; border-radius: 3px; cursor: pointer; font-weight: 700;
+      font-family: 'Oswald', sans-serif; letter-spacing: 1px;
+    }
+    .admin button:hover { background: var(--gold); color: #000; }
+
+    /* ── LOGO ── */
+    .logo-wrap { text-align: center; position: relative; z-index: 2; }
+    .logo-img {
+      width: min(720px, 90%);
+      max-width: 100%;
+      display: inline-block;
+      animation: floatLogo 10s ease-in-out infinite;
+      filter: drop-shadow(0 0 18px rgba(212,160,23,0.35));
+    }
+    .logo-main {
+      font-size: 4.2rem; font-weight: 900; text-transform: uppercase;
+      letter-spacing: 8px; line-height: 1;
+      background: linear-gradient(180deg, #ffe480 0%, #d4a017 45%, #8a5c00 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      opacity: 0.01;
+      position: absolute; inset: 0; pointer-events: none;
+    }
+    .logo-sub {
+      font-size: 0.82rem; letter-spacing: 5px; color: #4a5a6a;
+      text-transform: uppercase; margin-top: -4px;
+    }
+
+    /* ── MACHINE ── */
+    .machine {
+      margin-top: 140px;
+      background-image:
+        linear-gradient(175deg, rgba(20,25,31,0.92) 0%, rgba(12,16,21,0.95) 100%),
+        url('menu-bg.jpg');
+      background-size: cover, cover;
+      background-position: center center;
+      background-repeat: no-repeat;
+      border: 3px solid #1e2a35;
+      border-radius: 6px;
+      padding: 18px;
+      width: 100%; max-width: 980px;
+      box-shadow:
+        0 0 0 1px #08080e,
+        0 30px 60px rgba(0,0,0,0.85),
+        inset 0 1px 0 rgba(255,255,255,0.04);
+      animation: machineGlow 14s ease-in-out infinite;
+    }
+
+    /* ── REELS ── */
+    .reels-wrap {
+      background: #04050a;
+      border: 2px solid #0e1418;
+      border-radius: 3px;
+      padding: 12px;
+      display: flex; 
+      gap: 0; 
+      justify-content: center; 
+      margin: 0 auto;      
+      max-width: max-content;  
+      box-shadow: inset 0 0 40px rgba(0,0,0,0.9);
+    }
+
+    .reel {
+      width: 155px;
+      display: flex; 
+      flex-direction: column; 
+      gap: 0; 
+      transition: filter 0.05s, transform 0.25s ease, box-shadow 0.25s ease;
+      --reel-scale: 1;
+      transform: scale(var(--reel-scale));
+    }
+
+    .reel.spinning {
+      animation-name: reel-blur;
+      animation-timing-function: linear;
+      animation-iteration-count: infinite;
+      animation-duration: var(--spin-dur, 0.11s);
+      animation-delay: var(--spin-delay, 0s);
+      will-change: transform, filter, opacity;
+    }
+    .reel.featured {
+      --reel-scale: 1.04;
+      box-shadow: 0 0 24px rgba(212,160,23,0.25);
+    }
+
+    @keyframes logoIntroMorph {
+      0% {
+        transform: scale(4); 
+        /* Hier ist das Logo anfangs riesig */
+      }
+      100% {
+        transform: scale(1); 
+        /* Hier ist es wieder auf normaler Größe */
+      }
+    }
+
+    .logo-intro-anim {
+      animation: logoIntroMorph 2s ease-out forwards;
+      transform-origin: center center; 
+    }
+
+    @keyframes reel-blur {
+      0% {
+        transform: scale(var(--reel-scale)) translateY(0) rotate(0deg);
+        filter: blur(calc(var(--spin-blur-min, 0) * 1px));
+        opacity: 1;
+      }
+      25% {
+        transform: scale(calc(var(--reel-scale) * 1.01)) translateY(calc(var(--spin-translate) * -0.6px)) rotate(calc(var(--spin-rot) * -0.4deg));
+        filter: blur(calc(var(--spin-blur-max, 6) * 1px));
+        opacity: 0.75;
+      }
+      50% {
+        transform: scale(calc(var(--reel-scale) * 1.02)) translateY(calc(var(--spin-translate) * 0.6px)) rotate(calc(var(--spin-rot) * 0.4deg));
+        filter: blur(calc(var(--spin-blur-max, 6) * 1px));
+        opacity: 0.6;
+      }
+      75% {
+        transform: scale(calc(var(--reel-scale) * 1.01)) translateY(calc(var(--spin-translate) * -0.25px)) rotate(calc(var(--spin-rot) * -0.15deg));
+        filter: blur(calc(var(--spin-blur-min, 0) * 1px));
+        opacity: 0.85;
+      }
+      100% {
+        transform: scale(var(--reel-scale)) translateY(0) rotate(0deg);
+        filter: blur(calc(var(--spin-blur-min, 0) * 1px));
+        opacity: 1;
+      }
+    }
+
+    .cell {
+      height: 150px;
+      width: 150px;  
+      border: 2px solid #1a2530;
+      border-radius: 4px;
+      background: linear-gradient(145deg, #141c24 0%, #0c1014 100%);
+      display: flex; 
+      flex-direction: column;
+      align-items: center; 
+      justify-content: center;
+      position: relative; 
+      overflow: hidden;
+      transition: border-color 0.15s;
+    }
+
+    .cell::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .cell .sym-name {
+      display: none;
+    }
+
+    .cell.t-wild .sym-name    { color: #8a6a00; }
+    .cell.t-premium .sym-name { color: #6a3a9a; }
+    .cell.t-normal .sym-name  { color: #3a5a6a; }
+
+    .cell svg.sym, .cell img.sym {
+      width: 96%; 
+      height: 96%; 
+      position: relative; 
+      z-index: 1;
+      object-fit: cover; 
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+      user-select: none; 
+      -webkit-user-drag: none;
+      transition: transform 0.25s ease, filter 0.25s ease;
+    }
+
+    .reel.spinning .cell img.sym {
+      animation-name: sym-drop;
+      animation-duration: var(--sym-dur, 0.45s);
+      animation-timing-function: cubic-bezier(0.2,0.8,0.2,1);
+      animation-iteration-count: infinite;
+      will-change: transform, filter;
+    }
+
+    @keyframes sym-drop {
+      0% {
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+      }
+      60% {
+        transform: translateY(calc(var(--sym-translate, 18) * 1px)) scale(1.02);
+        filter: blur(calc(var(--sym-blur, 1.2) * 1px));
+      }
+      100% {
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+      }
+    }
+    
+    .cell.win img.sym { animation: symPop 0.55s ease-in-out infinite alternate; }
+    @keyframes symPop {
+      from { transform: scale(1); filter: drop-shadow(0 0 4px rgba(245,200,66,0.4)); }
+      to   { transform: scale(1.12); filter: drop-shadow(0 0 18px rgba(245,200,66,0.9)); }
+    }
+    .cell.mega-symbol img.sym {
+      animation: megaMerge 0.6s ease-out forwards;
+      transform: scale(1.18);
+      filter: drop-shadow(0 0 14px rgba(212,160,23,0.9)) brightness(1.15);
+    }
+    @keyframes megaMerge {
+      0%   { transform: scale(0.85); opacity: 0.6; }
+      60%  { transform: scale(1.3);  opacity: 1; filter: drop-shadow(0 0 22px #f5c842) brightness(1.4); }
+      100% { transform: scale(1.18); opacity: 1; filter: drop-shadow(0 0 14px rgba(212,160,23,0.9)) brightness(1.15); }
+    }
+    
+    .mega-overlay {
+      position: absolute; z-index: 20; pointer-events: none;
+      display: flex; align-items: center; justify-content: center;
+      border: 3px solid #f5c842; border-radius: 6px;
+      background: radial-gradient(circle at center, rgba(245,200,66,0.18), rgba(0,0,0,0) 70%);
+      box-shadow: 0 0 38px rgba(245,200,66,0.7), inset 0 0 28px rgba(245,200,66,0.35);
+      animation: megaOverlayIn 0.5s ease-out, megaOverlayPulse 1.2s ease-in-out infinite 0.5s;
+    }
+    .mega-overlay img { width: 98%; height: 98%; object-fit: contain;
+      filter: drop-shadow(0 0 24px rgba(245,200,66,0.95)) drop-shadow(0 4px 8px rgba(0,0,0,0.7)); }
+    @keyframes megaOverlayIn {
+      from { transform: scale(0.2) rotate(-8deg); opacity: 0; }
+      to   { transform: scale(1)   rotate(0);     opacity: 1; }
+    }
+    @keyframes megaOverlayPulse {
+      0%,100% { box-shadow: 0 0 28px rgba(245,200,66,0.55), inset 0 0 18px rgba(245,200,66,0.25); }
+      50%      { box-shadow: 0 0 58px rgba(245,200,66,0.95), inset 0 0 32px rgba(245,200,66,0.45); }
+    }
+    
+    .reel.last-stand .cell {
+      background: linear-gradient(145deg, #3c0901 0%, #140402 100%) !important;
+      transform: translateY(-1px);
+    }
+    .reel.last-stand .cell img.sym {
+      animation: lastStandSymPulse 0.35s ease-in-out infinite;
+      filter: drop-shadow(0 0 18px #ff7a2a) drop-shadow(0 0 32px rgba(231,76,60,0.85)) brightness(1.3);
+    }
+    @keyframes lastStandSymPulse {
+      0%,100% { transform: scale(1); filter: drop-shadow(0 0 14px #ff7a2a) brightness(1.15); }
+      25%      { transform: scale(1.08); filter: drop-shadow(0 0 32px #ff9a3a) drop-shadow(0 0 48px rgba(231,76,60,0.85)) brightness(1.5); }
+      60%      { transform: scale(1.12); filter: drop-shadow(0 0 42px #ffb35a) drop-shadow(0 0 62px rgba(231,76,60,0.95)) brightness(1.75); }
+    }
+    
+    .win-popup {
+      position: fixed; inset: 0; z-index: 200;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      pointer-events: none; opacity: 0;
+      background: radial-gradient(circle at center, rgba(0,0,0,0.55), rgba(0,0,0,0.85) 70%);
+      transition: opacity 0.25s ease;
+    }
+    .win-popup.show { opacity: 1; }
+    .win-popup .wp-title {
+      font-family: 'Oswald', Impact, sans-serif;
+      font-size: 5.5rem; font-weight: 900; letter-spacing: 10px;
+      text-transform: uppercase; line-height: 1;
+      background: linear-gradient(180deg, #fff8c0 0%, #f5c842 40%, #d4a017 70%, #8a5000 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 28px #d4a017) drop-shadow(0 4px 0 #000);
+      animation: wpTitleIn 0.55s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .win-popup.tier-mega   .wp-title { letter-spacing: 14px; font-size: 6.4rem;
+      background: linear-gradient(180deg,#fff,#9050cc 50%,#3a1060); -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+      filter: drop-shadow(0 0 32px #9050cc) drop-shadow(0 4px 0 #000); }
+    .win-popup.tier-epic   .wp-title { font-size: 7rem;
+      background: linear-gradient(180deg,#fff,#e74c3c 50%,#5a0a0a); -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+      filter: drop-shadow(0 0 38px #e74c3c) drop-shadow(0 4px 0 #000); }
+    .win-popup.tier-jackpot .wp-title { font-size: 8rem; letter-spacing: 16px;
+      background: linear-gradient(180deg,#fff,#f5c842 30%,#e74c3c 70%,#9050cc);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+      filter: drop-shadow(0 0 48px #f5c842) drop-shadow(0 0 80px #e74c3c);
+      animation: wpTitleIn 0.55s cubic-bezier(0.34,1.56,0.64,1), wpJackpotShake 0.3s ease-in-out infinite 0.55s; }
+    .win-popup .wp-amount {
+      margin-top: 18px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 3.2rem; font-weight: 700;
+      color: #2ecc71;
+      text-shadow: 0 0 16px rgba(46,204,113,0.7), 0 3px 0 #000;
+      animation: wpAmountCount 0.6s ease-out 0.25s both;
+    }
+    .win-popup .wp-sub {
+      margin-top: 8px; font-family: 'Oswald',sans-serif; letter-spacing: 6px;
+      color: #c8d4de; font-size: 0.95rem; text-transform: uppercase;
+      display: none; 
+    }
+    .win-popup .wp-freespins {
+      margin-top: 10px; font-family: 'Share Tech Mono', monospace;
+      font-size: 1.1rem; letter-spacing: 4px; color: #27c76e;
+      text-shadow: 0 0 12px rgba(39,199,110,0.7);
+      text-transform: uppercase;
+    }
+    @keyframes wpTitleIn {
+      0%   { transform: scale(0.2) rotate(-6deg); opacity: 0; }
+      60%  { transform: scale(1.15) rotate(2deg); opacity: 1; }
+      100% { transform: scale(1)    rotate(0);    opacity: 1; }
+    }
+    @keyframes wpAmountCount {
+      from { transform: translateY(20px); opacity: 0; }
+      to   { transform: translateY(0);     opacity: 1; }
+    }
+    @keyframes wpJackpotShake {
+      0%,100% { transform: translateX(0); }
+      25% { transform: translateX(-6px) rotate(-1deg); }
+      75% { transform: translateX(6px)  rotate(1deg); }
+    }
+    
+    .wp-spark {
+      position: absolute; width: 8px; height: 8px; border-radius: 50%;
+      background: #f5c842; box-shadow: 0 0 12px #f5c842;
+      animation: sparkFly 1.4s ease-out forwards;
+    }
+    @keyframes sparkFly {
+      from { transform: translate(0,0) scale(1); opacity: 1; }
+      to   { transform: var(--end-transform); opacity: 0; }
+    }
+    
+    .battalion-summary {
+      position: fixed; inset: 0; z-index: 220;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(4,6,10,0.92);
+      opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    }
+    .battalion-summary.show { opacity: 1; pointer-events: auto; }
+    .bs-card {
+      background: linear-gradient(180deg,#1a1408 0%,#0a0604 100%);
+      border: 3px solid #d4a017;
+      border-radius: 10px; padding: 38px 56px; text-align: center;
+      box-shadow: 0 0 60px rgba(212,160,23,0.55), inset 0 0 40px rgba(212,160,23,0.12);
+      animation: bsIn 0.5s cubic-bezier(0.34,1.56,0.64,1);
+      max-width: 90vw;
+    }
+    @keyframes bsIn { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .bs-card h2 {
+      font-family: 'Oswald', Impact, sans-serif; font-size: 2.4rem;
+      letter-spacing: 8px; color: #f5c842; text-transform: uppercase;
+      text-shadow: 0 0 20px rgba(212,160,23,0.7);
+    }
+    .bs-card .bs-amount {
+      margin-top: 22px; font-family: 'Share Tech Mono', monospace;
+      font-size: 4rem; font-weight: 700; color: #2ecc71;
+      text-shadow: 0 0 24px rgba(46,204,113,0.8);
+    }
+    .bs-card .bs-stats { margin-top: 18px; color: #c8d4de; font-size: 0.95rem; letter-spacing: 3px; }
+    .bs-card .bs-close {
+      margin-top: 28px; background: #1e2a35; border: 2px solid #d4a017; color: #d4a017;
+      font-family: 'Oswald', sans-serif; font-size: 1.1rem; letter-spacing: 4px;
+      padding: 10px 38px; cursor: pointer; border-radius: 4px; font-weight: 900;
+      text-transform: uppercase; pointer-events: auto;
+    }
+    .bs-card .bs-close:hover { background: #d4a017; color: #000; }
+    .reel { animation: reelPulse 10s ease-in-out infinite; }
+
+    @keyframes win-pulse {
+      0%,100% { border-color: var(--gold); box-shadow: 0 0 8px var(--gold),  inset 0 0 8px rgba(212,160,23,0.15); }
+      50%      { border-color: #fff8;      box-shadow: 0 0 24px var(--gold), inset 0 0 16px rgba(212,160,23,0.3); }
+    }
+
+    @keyframes floatLogo {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    @keyframes machineGlow {
+      0%,100% { transform: scale(1); box-shadow: 0 30px 60px rgba(0,0,0,0.85), inset 0 1px 0 rgba(255,255,255,0.04); }
+      50% { transform: scale(1.002); box-shadow: 0 34px 72px rgba(0,0,0,0.78), inset 0 1px 0 rgba(255,255,255,0.08); }
+    }
+    @keyframes reelPulse {
+      0%,100% { filter: brightness(1); }
+      50% { filter: brightness(1.06); }
+    }
+    .cell.win { animation: win-pulse 0.45s ease-in-out infinite; }
+
+    .payline-bar {
+      height: 3px;
+      background: linear-gradient(90deg, transparent 0%, var(--gold) 20%, var(--gold) 80%, transparent 100%);
+      margin: 2px 0; opacity: 0; transition: opacity 0.3s;
+      border-radius: 2px;
+    }
+    .payline-bar.lit { opacity: 1; }
+
+    #payline-svg {
+      position: absolute;
+      top: 0; left: 0;
+      pointer-events: none;
+      z-index: 30;
+    }
+
+    .payline-stroke {
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    .payline-glow {
+      stroke: #fff8;  
+      stroke-width: 6;
+      filter: blur(3px);
+      opacity: 0;
+    }
+
+    .payline-core {
+      stroke: #f5c842; 
+      stroke-width: 2.5;
+      opacity: 0;
+      filter: drop-shadow(0 0 4px #f5c842);
+    }
+
+    @keyframes payline-lightning {
+      0% {
+        stroke-dasharray: 100%;
+        stroke-dashoffset: 100%;
+        opacity: 0;
+      }
+      5% {
+        opacity: 0.8;
+      }
+      15% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 1;
+        filter: drop-shadow(0 0 8px #f5c842) drop-shadow(0 0 16px rgba(245,200,66,0.8)) drop-shadow(0 0 24px rgba(245,200,66,0.5));
+      }
+      80% {
+        opacity: 0.8;
+      }
+      95% {
+        opacity: 0.3;
+      }
+      100% {
+        stroke-dasharray: 100%;
+        stroke-dashoffset: 0;
+        opacity: 0;
+      }
+    }
+
+    .payline-glow.animate {
+      animation: payline-lightning 1.0s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    }
+
+    .payline-core.animate {
+      animation: payline-lightning 1.0s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    }
+
+    .dashboard {
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: repeat(5,1fr) auto;
+      gap: 10px; align-items: stretch;
+    }
+
+    .stat {
+      background: #060708;
+      border: 1px solid #14202a;
+      border-radius: 4px;
+      padding: 10px 12px;
+      text-align: center;
+    }
+    .stat-label { font-size: 0.68rem; color: #3a5060; letter-spacing: 2.5px; text-transform: uppercase; }
+    .stat-val {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 1.35rem; margin-top: 3px; color: var(--green);
+    }
+    .stat-val.gold  { color: var(--gold); }
+    .stat-val.white { color: #c8d4de; }
+
+    .spin-wrap { display: flex; }
+    .btn-spin {
+      flex: 1;
+      background: linear-gradient(180deg, #2a8a50 0%, #1a6036 100%);
+      border: 2px solid #2ecc71; border-radius: 4px;
+      color: #fff; font-family: 'Oswald', sans-serif;
+      font-size: 1.8rem; font-weight: 900; letter-spacing: 4px;
+      text-transform: uppercase; cursor: pointer; padding: 0 28px;
+      box-shadow: 0 5px 0 #0a3020, 0 0 20px rgba(46,204,113,0.2);
+      transition: transform 0.08s, box-shadow 0.08s;
+    }
+    .btn-spin:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 1px 0 #0a3020; }
+    .btn-spin:disabled {
+      background: linear-gradient(180deg, #222 0%, #151515 100%);
+      border-color: #333; box-shadow: none; cursor: not-allowed; color: #555;
+    }
+
+    .ticker {
+      margin-top: 12px;
+      background: #04050a;
+      border: 1px solid #0e1820;
+      border-radius: 3px;
+      padding: 11px 18px;
+      text-align: center;
+      font-size: 1rem; letter-spacing: 1.5px;
+      color: var(--gold); text-transform: uppercase;
+      min-height: 44px;
+    }
+
+    @keyframes ticker-flash {
+      0%,100% { background: #04050a; }
+      50%      { background: #100c00; }
+    }
+    .ticker.flash { animation: ticker-flash 0.4s infinite; }
+
+    .paytable {
+      margin-top: 10px;
+      background: #04050a;
+      border: 1px solid #0e1820;
+      border-radius: 3px;
+      padding: 10px 16px;
+      display: flex; flex-wrap: wrap; gap: 10px 20px; justify-content: center;
+    }
+    .pay-row {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.73rem; color: #4a6070;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .pay-row .ph { color: var(--gold); font-weight: 700; }
+
+    .music-bar {
+      margin-top: 10px; background: #04050a;
+      border: 1px solid #0e1820; border-radius: 3px;
+      padding: 9px 14px;
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      font-size: 0.8rem; color: #4a6070;
+    }
+    .music-bar .lbl { white-space: nowrap; font-family: 'Oswald', sans-serif; letter-spacing: 1px; }
+    .btn-music {
+      background: #10181f; border: 1px solid #1e2a35; color: var(--gold);
+      padding: 4px 14px; border-radius: 3px; cursor: pointer;
+      font-family: 'Oswald', sans-serif; font-weight: 700; letter-spacing: 1px;
+      white-space: nowrap;
+    }
+    .btn-music:hover { background: var(--gold); color: #000; }
+    #music-info { flex: 1; min-width: 140px; color: #3a5060; font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; }
+    #vol-slider { width: 70px; cursor: pointer; accent-color: var(--gold); }
+
+    .music-note {
+      margin-top: 6px; font-size: 0.72rem; color: #2a3a4a;
+      font-family: 'Share Tech Mono', monospace; text-align: center; line-height: 1.5;
+    }
+    .music-note a { color: #3a5a6a; }
+
+    .reel.chained {
+      border: 3px solid #00e5ff !important;
+      box-shadow: 0 0 28px rgba(0,229,255,0.7), 0 0 60px rgba(0,180,255,0.4), inset 0 0 16px rgba(0,229,255,0.25) !important;
+      animation: chainedGlow 0.35s ease-in-out infinite !important;
+    }
+    @keyframes chainedGlow {
+      0%   { box-shadow: 0 0 22px rgba(0,229,255,0.5), inset 0 0 10px rgba(0,229,255,0.2); border-color: #00e5ff; transform: scaleY(1); }
+      25%  { box-shadow: 0 0 55px rgba(0,229,255,1.0), 0 0 100px rgba(0,180,255,0.6), inset 0 0 22px rgba(0,229,255,0.4); border-color: #fff; transform: scaleY(1.015); }
+      50%  { box-shadow: 0 0 70px rgba(0,229,255,0.9), 0 0 120px rgba(80,220,255,0.5), inset 0 0 28px rgba(0,229,255,0.5); border-color: #80f8ff; transform: scaleY(1.02); }
+      75%  { box-shadow: 0 0 45px rgba(0,229,255,0.8), 0 0 80px rgba(0,180,255,0.4), inset 0 0 18px rgba(0,229,255,0.35); border-color: #fff; transform: scaleY(1.01); }
+      100% { box-shadow: 0 0 22px rgba(0,229,255,0.5), inset 0 0 10px rgba(0,229,255,0.2); border-color: #00e5ff; transform: scaleY(1); }
+    }
+    .reel.chained .cell {
+      animation: chainCellFlash 0.35s ease-in-out infinite !important;
+      border-color: #00e5ff !important;
+    }
+    @keyframes chainCellFlash {
+      0%,100% { background: linear-gradient(145deg, #001a20 0%, #000d14 100%); }
+      50%      { background: linear-gradient(145deg, #003040 0%, #001a28 100%); box-shadow: inset 0 0 18px rgba(0,229,255,0.35); }
+    }
+
+    .reel.last-stand {
+      border: 3px solid #ff7a2a !important;
+      box-shadow: 0 0 28px rgba(231,76,60,0.75), inset 0 0 16px rgba(231,76,60,0.28) !important;
+      animation: lastStandFire 0.35s ease-in-out infinite !important;
+    }
+    @keyframes lastStandFire {
+      0%,100% {
+        box-shadow: 0 0 22px rgba(231,76,60,0.55), inset 0 0 12px rgba(231,76,60,0.22);
+        transform: scale(1);
+      }
+      50% {
+        box-shadow: 0 0 48px rgba(255,140,0,0.9), 0 0 80px rgba(231,76,60,0.45), inset 0 0 20px rgba(255,140,0,0.3);
+        transform: scale(1.01);
+      }
+    }
+
+    .reel.battalion {
+      animation: battalionPulse 0.7s ease-in-out infinite !important;
+    }
+    @keyframes battalionPulse {
+      0%,100% { box-shadow: 0 0 12px rgba(39,199,110,0.3); border-color: #27c76e; }
+      50%      { box-shadow: 0 0 28px rgba(39,199,110,0.7); border-color: #a0ffc8; }
+    }
+
+    .cell.mega-symbol {
+      border-color: transparent !important;
+      background: #000 !important;
+      animation: none !important;
+    }
+    .cell.mega-symbol img.sym {
+      opacity: 0 !important;
+    }
+    .cell.mega-symbol.win {
+      border-color: #d4a017 !important;
+      animation: megaSymbolGlow 0.5s ease-in-out infinite !important;
+    }
+    .cell.mega-symbol.win img.sym {
+      opacity: 1 !important;
+    }
+    @keyframes megaSymbolGlow {
+      0%,100% { box-shadow: 0 0 12px rgba(212,160,23,0.4); }
+      50%      { box-shadow: 0 0 28px rgba(212,160,23,0.9); }
+    }
+
+    .cell.t-scatter {
+      animation: scatterPulse 1s ease-in-out infinite;
+    }
+    @keyframes scatterPulse {
+      0%,100% { border-color: #c8900a; box-shadow: 0 0 8px rgba(212,160,23,0.3); }
+      50%      { border-color: #f5c842; box-shadow: 0 0 20px rgba(245,200,66,0.6); }
+    }
+    .cell.scatter-buildup {
+      animation: scatterBuildup 0.4s ease-in-out infinite !important;
+      z-index: 5;
+    }
+    .cell.scatter-transform {
+      animation: scatterTransformFlash 0.18s ease-in-out 2 !important;
+      z-index: 6;
+    }
+    @keyframes scatterTransformFlash {
+      0%   { transform: scale(1); filter: brightness(1); box-shadow: 0 0 12px rgba(255,220,0,0.35); }
+      50%  { transform: scale(1.08); filter: brightness(1.25); box-shadow: 0 0 30px rgba(255,255,255,0.75), 0 0 45px rgba(255,180,0,0.65); }
+      100% { transform: scale(1); filter: brightness(1); box-shadow: 0 0 12px rgba(255,220,0,0.35); }
+    }
+    @keyframes scatterBuildup {
+      0%   { border-color: #ff9900; box-shadow: 0 0 12px rgba(255,153,0,0.5); transform: scale(1); }
+      30%  { border-color: #ffdd00; box-shadow: 0 0 40px rgba(255,220,0,1.0), 0 0 80px rgba(255,150,0,0.6); transform: scale(1.08); }
+      60%  { border-color: #ffffff; box-shadow: 0 0 60px rgba(255,255,255,0.9), 0 0 100px rgba(255,180,0,0.7); transform: scale(1.12); }
+      100% { border-color: #ff9900; box-shadow: 0 0 12px rgba(255,153,0,0.5); transform: scale(1); }
+    }
+    
+    #scatter-counter-overlay {
+      position: fixed; inset: 0; z-index: 190; pointer-events: none;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.3s;
+    }
+    #scatter-counter-overlay.show { opacity: 1; }
+    .sco-inner {
+      display: flex; flex-direction: column; align-items: center;
+      font-family: 'Oswald', Impact, sans-serif; text-transform: uppercase;
+      animation: scoIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .sco-count {
+      font-size: 9rem; font-weight: 900; line-height: 1;
+      background: linear-gradient(180deg,#fff 0%,#ffdd00 40%,#ff9900 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 40px #ffaa00) drop-shadow(0 4px 0 #000);
+      animation: scoCountPulse 0.4s ease-in-out infinite;
+    }
+    .sco-slash { font-size: 4rem; color: #f5c842; letter-spacing: 4px; opacity: 0.7; }
+    .sco-label { font-size: 1.6rem; letter-spacing: 12px; color: #c8d4de; margin-top: -4px; }
+    @keyframes scoIn {
+      from { transform: scale(0.3) translateY(40px); opacity: 0; }
+      to   { transform: scale(1) translateY(0); opacity: 1; }
+    }
+    @keyframes scoCountPulse {
+      0%,100% { filter: drop-shadow(0 0 30px #ffaa00); }
+      50%      { filter: drop-shadow(0 0 70px #ffe000) drop-shadow(0 0 120px #ff7700); }
+    }
+
+    #battalion-confirm {
+      position: fixed; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.65); z-index: 210; padding: 18px;
+      animation: battalionConfirmIn 0.25s ease-out;
+    }
+    #battalion-confirm.hidden { display: none; }
+    .battalion-confirm-card {
+      width: min(420px, 92vw); border: 2px solid #d4a017;
+      border-radius: 18px; background: linear-gradient(180deg, #161d24 0%, #0b1218 100%);
+      box-shadow: 0 0 36px rgba(212,160,23,0.35), 0 0 80px rgba(255,180,0,0.18);
+      color: #f5f7fa; text-align: center; padding: 18px 18px 14px;
+      animation: battalionCardPulse 0.8s ease-in-out infinite alternate;
+    }
+    .battalion-confirm-card h3 {
+      margin: 0 0 8px; font-family: 'Oswald', Impact, sans-serif; letter-spacing: 3px; text-transform: uppercase; color: #ffd86b;
+      font-size: 1.2rem;
+    }
+    .battalion-confirm-card p { margin: 0 0 10px; color: #dbe5ee; font-size: 0.95rem; line-height: 1.35; }
+    .battalion-symbol-preview {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 88px; height: 88px; margin: 6px auto 10px; border-radius: 16px;
+      background: radial-gradient(circle at top, #273440 0%, #121a22 70%);
+      border: 2px solid #ffd86b; box-shadow: 0 0 24px rgba(255,220,0,0.35);
+      animation: battalionSymbolPulse 0.6s ease-in-out infinite alternate;
+    }
+    .battalion-symbol-preview img { width: 56px; height: 56px; object-fit: contain; filter: drop-shadow(0 0 10px rgba(255,220,0,0.35)); }
+    .battalion-confirm-btn {
+      margin-top: 4px; border: none; border-radius: 999px; padding: 10px 18px;
+      font-family: 'Oswald', Impact, sans-serif; text-transform: uppercase; letter-spacing: 2px;
+      background: linear-gradient(135deg, #ffd86b 0%, #d4a017 100%); color: #111; font-weight: 800; cursor: pointer;
+      box-shadow: 0 8px 18px rgba(212,160,23,0.35);
+    }
+    .battalion-confirm-btn:hover { transform: translateY(-1px); }
+    @keyframes battalionConfirmIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes battalionCardPulse { from { transform: translateY(0); } to { transform: translateY(-2px); } }
+    @keyframes battalionSymbolPulse { from { transform: scale(1); } to { transform: scale(1.05); } }
+
+    #battalion-banner {
+      position: fixed; inset: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: center;
+      pointer-events: none; opacity: 0;
+      transition: opacity 0.3s;
+    }
+    #battalion-banner.show { opacity: 1; pointer-events: auto; }
+    #battalion-banner .banner-text {
+      font-family: 'Oswald', Impact, sans-serif;
+      font-size: 4rem; font-weight: 900; letter-spacing: 8px;
+      color: #f5c842; text-transform: uppercase;
+      text-shadow: 0 0 40px #d4a017, 0 0 80px #d4a017, 0 4px 0 #000;
+      animation: bannerZoom 0.5s ease-out forwards;
+    }
+    @keyframes bannerZoom {
+      from { transform: scale(0.3); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+
+    .feature-pill {
+      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+      background: #d4a017; color: #000; font-size: 0.55rem;
+      font-family: 'Oswald', sans-serif; font-weight: 900;
+      letter-spacing: 2px; padding: 2px 8px; border-radius: 10px;
+      white-space: nowrap; z-index: 10;
+      animation: pillPop 0.3s ease-out forwards;
+    }
+    @keyframes pillPop {
+      from { transform: translateX(-50%) scale(0); opacity: 0; }
+      to   { transform: translateX(-50%) scale(1); opacity: 1; }
+    }
+
+    .reels-wrap { position: relative; }
+
+    #freespin-badge {
+      display: none;
+      position: absolute; top: -14px; right: -14px;
+      background: #27c76e; color: #000; border-radius: 50%;
+      width: 32px; height: 32px;
+      font-family: 'Oswald', sans-serif; font-weight: 900;
+      font-size: 1rem; line-height: 32px; text-align: center;
+      box-shadow: 0 0 12px rgba(39,199,110,0.7);
+      animation: spinBadge 1s ease-in-out infinite;
+      z-index: 5;
+    }
+    @keyframes spinBadge {
+      0%,100% { transform: scale(1); }
+      50%      { transform: scale(1.2); }
+    }
+
+    .tension-bar {
+      margin-top: 6px; background: #04050a;
+      border: 1px solid #0e1820; border-radius: 3px;
+      padding: 9px 16px;
+      display: flex; align-items: center; gap: 11px;
+    }
+    .tension-bar .t-lbl {
+      font-family: 'Oswald', sans-serif; letter-spacing: 1.5px;
+      font-size: 0.76rem; color: #4a6070; white-space: nowrap; flex-shrink: 0;
+    }
+    .tension-lamps { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+    .tension-lamp {
+      width: 14px; height: 14px; border-radius: 50%;
+      border: 1px solid #1a2530; background: #0c1014;
+      transition: background 0.45s ease, box-shadow 0.45s ease;
+      flex-shrink: 0;
+    }
+    .tension-lamp.active { border-color: transparent; }
+    .tension-track {
+      flex: 1; height: 7px; background: #060809;
+      border-radius: 4px; overflow: hidden;
+      border: 1px solid #1a2530; min-width: 60px;
+    }
+    .tension-fill {
+      height: 100%; width: 0%; border-radius: 4px; background: #2e86c1;
+      transition: width 0.65s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.55s ease;
+    }
+    #tension-label {
+      font-family: 'Share Tech Mono', monospace; font-weight: 700;
+      font-size: 0.76rem; color: #2e86c1; white-space: nowrap;
+      min-width: 72px; text-align: right; letter-spacing: 1px;
+      transition: color 0.45s ease;
+    }
+
+    /* ── AUTOPLAY MODAL ── */
+    #autoplay-modal {
+      position: fixed; inset: 0; z-index: 300;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.75);
+      animation: apModalIn 0.2s ease-out;
+    }
+    #autoplay-modal.hidden { display: none; }
+    @keyframes apModalIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    .ap-card {
+      background: linear-gradient(180deg, #161d24 0%, #0b1218 100%);
+      border: 2px solid var(--gold);
+      border-radius: 10px;
+      padding: 28px 32px 22px;
+      width: min(440px, 94vw);
+      box-shadow: 0 0 48px rgba(212,160,23,0.3), 0 0 100px rgba(0,0,0,0.8);
+      color: var(--text);
+      font-family: 'Oswald', sans-serif;
+    }
+    .ap-card h2 {
+      color: var(--gold); font-size: 1.3rem; letter-spacing: 5px;
+      text-transform: uppercase; text-align: center; margin-bottom: 22px;
+      text-shadow: 0 0 16px rgba(212,160,23,0.5);
+    }
+    .ap-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px; gap: 10px;
+    }
+    .ap-row label {
+      font-size: 0.82rem; letter-spacing: 2px; color: #8aacba;
+      text-transform: uppercase; flex: 1;
+    }
+    .ap-row select, .ap-row input[type=number] {
+      background: #060a0e; border: 1px solid #1e2a35; color: #e0e6ed;
+      padding: 6px 10px; border-radius: 4px;
+      font-family: 'Share Tech Mono', monospace; font-size: 0.88rem;
+      min-width: 110px; text-align: right;
+    }
+    .ap-row input[type=checkbox] {
+      width: 18px; height: 18px; accent-color: var(--gold); cursor: pointer;
+    }
+    .ap-divider {
+      border: none; border-top: 1px solid #1e2a35; margin: 18px 0;
+    }
+    .ap-section-title {
+      font-size: 0.72rem; letter-spacing: 3px; color: #4a6070;
+      text-transform: uppercase; margin-bottom: 12px; margin-top: 4px;
+    }
+    .ap-actions {
+      display: flex; gap: 10px; margin-top: 20px;
+    }
+    .ap-btn {
+      flex: 1; padding: 11px; border-radius: 4px; cursor: pointer;
+      font-family: 'Oswald', sans-serif; font-weight: 700;
+      font-size: 1rem; letter-spacing: 3px; text-transform: uppercase;
+      border: none; transition: filter 0.15s;
+    }
+    .ap-btn:hover { filter: brightness(1.15); }
+    .ap-btn-start { background: var(--gold); color: #000; }
+    .ap-btn-cancel { background: #1e2a35; color: #8aacba; border: 1px solid #2a3a4a; }
+
+    /* ── WIN CONFIRM MODAL ── */
+    #win-confirm-modal {
+      position: fixed; inset: 0; z-index: 250;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.82);
+      animation: apModalIn 0.2s ease-out;
+    }
+    #win-confirm-modal.hidden { display: none; }
+    .wc-card {
+      background: linear-gradient(180deg, #1a1408 0%, #0a0604 100%);
+      border: 2px solid var(--gold);
+      border-radius: 12px;
+      padding: 32px 40px 26px;
+      width: min(400px, 92vw);
+      text-align: center;
+      box-shadow: 0 0 56px rgba(212,160,23,0.45), 0 0 120px rgba(0,0,0,0.9);
+      animation: bsIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .wc-tier-label {
+      font-family: 'Oswald', Impact, sans-serif;
+      font-size: 2.2rem; font-weight: 900; letter-spacing: 8px;
+      text-transform: uppercase;
+      background: linear-gradient(180deg, #fff8c0 0%, #f5c842 40%, #d4a017 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 18px #d4a017);
+      margin-bottom: 6px;
+    }
+    .wc-tier-label.tier-mega   { background: linear-gradient(180deg,#fff,#9050cc 50%,#3a1060); -webkit-background-clip:text;-webkit-text-fill-color:transparent; filter: drop-shadow(0 0 20px #9050cc); }
+    .wc-tier-label.tier-epic   { background: linear-gradient(180deg,#fff,#e74c3c 50%,#5a0a0a); -webkit-background-clip:text;-webkit-text-fill-color:transparent; filter: drop-shadow(0 0 22px #e74c3c); }
+    .wc-tier-label.tier-jackpot { background: linear-gradient(180deg,#fff,#f5c842 30%,#e74c3c 70%,#9050cc); -webkit-background-clip:text;-webkit-text-fill-color:transparent; filter: drop-shadow(0 0 28px #f5c842); }
+    .wc-amount {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 2.8rem; font-weight: 700; color: #2ecc71;
+      text-shadow: 0 0 18px rgba(46,204,113,0.7); margin: 10px 0 6px;
+    }
+    .wc-mult {
+      font-size: 0.9rem; letter-spacing: 4px; color: #8aacba;
+      text-transform: uppercase; margin-bottom: 22px;
+    }
+    .wc-question {
+      font-family: 'Oswald', sans-serif; font-size: 0.9rem;
+      letter-spacing: 3px; color: #c8d4de; text-transform: uppercase;
+      margin-bottom: 18px;
+    }
+    .wc-actions { display: flex; gap: 10px; }
+    .wc-btn {
+      flex: 1; padding: 12px; border-radius: 4px; cursor: pointer;
+      font-family: 'Oswald', sans-serif; font-weight: 700;
+      font-size: 1rem; letter-spacing: 3px; text-transform: uppercase;
+      border: none; transition: filter 0.15s;
+    }
+    .wc-btn:hover { filter: brightness(1.15); }
+    .wc-btn-continue { background: var(--gold); color: #000; }
+    .wc-btn-stop     { background: #1e2a35; color: #e74c3c; border: 1px solid #e74c3c; }
+  </style>
+</head>
+<body>
+
+<div class="admin">
+  <label>Währung:
+    <select id="sel-curr" onchange="changeCurrency()">
+      <option value="€">EUR €</option>
+      <option value="🪙">Credits 🪙</option>
+    </select>
+  </label>
+  <label>Einsatz:
+    <select id="sel-bet" onchange="changeBet()">
+      <option value="0.10">0.10</option>
+      <option value="0.20">0.20</option>
+      <option value="0.50">0.50</option>
+      <option value="1">1</option>
+      <option value="2" selected>2</option>
+      <option value="5">5</option>
+    </select>
+  </label>
+</div>
+
+<div class="logo-wrap">
+  <img src="Sabaton-logo.png" class="logo-intro-anim" id="game-logo" alt="Sabaton">
+  <div class="logo-main">Sabaton</div>
+  <div class="logo-sub">Heavy Metal Slots</div>
+</div>
+
+<div class="machine">
+
+  <div class="reels-wrap" id="reels-wrap" style="position:relative">
+    <div id="freespin-badge">0</div>
+    <svg id="payline-svg"></svg>
+  </div>
+
+  <div class="dashboard">
+    <div class="stat">
+      <div class="stat-label">Guthaben</div>
+      <div class="stat-val" id="d-credits">1000 €</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Einsatz</div>
+      <div class="stat-val gold" id="d-bet">2 €</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Gewinn</div>
+      <div class="stat-val gold" id="d-win">— €</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Spiele</div>
+      <div class="stat-val white" id="d-spins">0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Freispiele</div>
+      <div class="stat-val gold" id="d-freespins">0</div>
+    </div>
+    <div class="spin-wrap" style="display:inline-flex; gap:8px; align-items:center;">
+      <button class="btn-spin" id="btn-spin" onclick="spin()">SPIN</button>
+      <button id="btn-auto" onclick="toggleAutoPlay()" style="background: var(--purple); color: #fff; border: none; padding: 10px 18px; font-family: inherit; font-size: 15px; cursor: pointer; border-radius: 4px; font-weight: bold; height: 52px; letter-spacing:1px;">Auto</button>
+    </div>
+  </div>
+
+  <div class="payline-bar" id="pl-bar"></div>
+
+  <div class="ticker" id="ticker">Bereit für die Schlacht? Drücke SPIN!</div>
+
+  <div class="paytable">
+    <div class="pay-row">🏆 5×WILD <span class="ph">×40</span></div>
+    <div class="pay-row">🎸 5×PÄR <span class="ph">×18</span></div>
+    <div class="pay-row">🎤 5×JOAKIM <span class="ph">×14</span></div>
+    <div class="pay-row">🎸 5×CHRIS <span class="ph">×14</span></div>
+    <div class="pay-row">🎸 5×TOMMY <span class="ph">×14</span></div>
+    
+    <div class="pay-row">⛑ 5×HELM <span class="ph">×2</span></div>
+    <div class="pay-row">🎖 5×MEDAILLE <span class="ph">×2</span></div>
+    <div class="pay-row">🛡 5×SCHILD <span class="ph">×1.2</span></div>
+    <div class="pay-row">💣 5×GRANATE <span class="ph">×0.8</span></div>
+    <div class="pay-row" style="color:#3a6050">🃏 WILD ersetzt alle außer SCATTER · 10 Paylines</div>
+    <div class="pay-row" style="color:#c8900a">⚡ 9 SCATTER → BATTALION SPINS (7 Freispiele)</div>
+    <div class="pay-row" style="color:#27c76e">⚔ BATTALION SPINS: Scatter → gewähltes Symbol · Viele Scatter für Retrigger!</div>
+    <div class="pay-row" style="color:#d4a017">🔗 CHAINED REELS: 2–3 adj. Walzen synchron · NICHT aktiv bei Battalion Spins</div>
+    <div class="pay-row" style="color:#e74c3c">🔥 LAST STAND: Walze wird 100% WILD</div>
+    <div class="pay-row" style="color:#9050cc">💎 MEGA SCATTER: 3 verknüpfte Walzen → 9 Scatter</div>
+    <div class="pay-row" style="color:#3a5060">RTP: 96,5% · Hit-Rate: ~25% · Max Win: 5.000×</div>
+  </div>
+</div>
+
+<!-- AUTOPLAY MODAL -->
+<div id="autoplay-modal" class="hidden">
+  <div class="ap-card">
+    <h2>⚙ Autoplay</h2>
+    <div class="ap-section-title">Anzahl der Spins</div>
+    <div class="ap-row">
+      <label>Spins spielen</label>
+      <select id="ap-count">
+        <option value="10">10 Spins</option>
+        <option value="25">25 Spins</option>
+        <option value="50" selected>50 Spins</option>
+        <option value="100">100 Spins</option>
+        <option value="200">200 Spins</option>
+        <option value="infinite">∞ Unbegrenzt</option>
+      </select>
+    </div>
+    <hr class="ap-divider">
+    <div class="ap-section-title">Pause &amp; Tempo</div>
+    <div class="ap-row">
+      <label>Pause nach jedem Spin</label>
+      <select id="ap-delay">
+        <option value="800">Kurz (0.8s)</option>
+        <option value="1200" selected>Normal (1.2s)</option>
+        <option value="2000">Lang (2.0s)</option>
+        <option value="3000">Sehr lang (3.0s)</option>
+      </select>
+    </div>
+    <div class="ap-row">
+      <label>Extra-Pause bei Gewinn</label>
+      <select id="ap-win-delay">
+        <option value="0">Keine</option>
+        <option value="1000">+1 Sek</option>
+        <option value="2000" selected>+2 Sek</option>
+        <option value="3500">+3.5 Sek</option>
+        <option value="5000">+5 Sek</option>
+      </select>
+    </div>
+    <hr class="ap-divider">
+    <div class="ap-section-title">Stop-Bedingungen</div>
+    <div class="ap-row">
+      <label>Stop bei Einzelgewinn ≥</label>
+      <input type="number" id="ap-stop-win" min="0" value="0" placeholder="0 = aus" style="width:110px">
+    </div>
+    <div class="ap-row">
+      <label>Stop wenn Guthaben unter</label>
+      <input type="number" id="ap-stop-balance" min="0" value="0" placeholder="0 = aus" style="width:110px">
+    </div>
+    <div class="ap-row">
+      <label>Bestätigung bei BIG WIN+<br><span style="font-size:0.7rem;color:#4a6070">(≥5× Einsatz — pausiert Autoplay)</span></label>
+      <input type="checkbox" id="ap-confirm-bigwin">
+    </div>
+    <div class="ap-row">
+      <label>Bestätigung bei MEGA WIN+<br><span style="font-size:0.7rem;color:#4a6070">(≥10× Einsatz — pausiert Autoplay)</span></label>
+      <input type="checkbox" id="ap-confirm-megawin" checked>
+    </div>
+    <div class="ap-actions">
+      <button class="ap-btn ap-btn-cancel" onclick="closeAutoplayModal()">Abbrechen</button>
+      <button class="ap-btn ap-btn-start" onclick="startAutoPlayFromModal()">▶ START</button>
+    </div>
+  </div>
+</div>
+
+<!-- WIN CONFIRM MODAL -->
+<div id="win-confirm-modal" class="hidden">
+  <div class="wc-card">
+    <div class="wc-tier-label" id="wc-tier-label">BIG WIN</div>
+    <div class="wc-amount" id="wc-amount">+0.00 €</div>
+    <div class="wc-mult" id="wc-mult">×0 Einsatz</div>
+    <div class="wc-question">Autoplay fortsetzen?</div>
+    <div class="wc-actions">
+      <button class="wc-btn wc-btn-stop" onclick="winConfirmStop()">⛔ Stoppen</button>
+      <button class="wc-btn wc-btn-continue" onclick="winConfirmContinue()">▶ Weiter</button>
+    </div>
+  </div>
+</div>
+
+<div class="music-bar">
+  <button class="btn-music" id="btn-music" onclick="toggleMusic()">▶ PLAY</button>
+  <span id="music-info">Keine Datei — siehe Hinweis unten</span>
+  <span style="margin-left:auto; display:flex; align-items:center; gap:6px;">
+    🔊 <input type="range" id="vol-slider" min="0" max="100" value="25" oninput="setVolume(this.value)">
+  </span>
+</div>
+<div class="music-note">
+  ▸ Lege die vier aufgeteilten Bismarck-MP3s in einen Ordner <code>music/</code> neben dieser HTML-Datei<br>
+  ▸ Die Datei-Liste wird automatisch nur aus <code>BISMARCK_TRACKS</code> geladen
+</div>
+
+<div class="tension-bar">
+  <span class="t-lbl">⚡ SPANNUNG</span>
+  <div class="tension-lamps">
+    <span class="tension-lamp" title="Stufe 1 – Ruhig"></span>
+    <span class="tension-lamp" title="Stufe 2 – Drive"></span>
+    <span class="tension-lamp" title="Stufe 3 – Refrain"></span>
+    <span class="tension-lamp" title="Stufe 4 – Kampf"></span>
+  </div>
+  <div class="tension-track">
+    <div id="tension-bar-fill" class="tension-fill"></div>
+  </div>
+  <span id="tension-label">❄️ RUHIG</span>
+</div>
+
+<div id="battalion-banner">
+  <div class="banner-text" id="battalion-banner-text">⚔ BATTALION SPINS ⚔</div>
+</div>
+
+<audio id="bg-audio"></audio>
+
+<script>
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ① SVG SYMBOL DEFINITIONEN
+// ═══════════════════════════════════════════════════════════════════════════
+
+const SYM = {
+  wild:    { id:'wild',    name:'WILD',     type:'wild',    img:'assets/wild.png'    },
+  joakim:  { id:'joakim',  name:'JOAKIM',   type:'premium', img:'assets/blau.png'    },
+  par:     { id:'par',     name:'PÄR',      type:'premium', img:'assets/rosa.png'    },
+  chris:   { id:'chris',   name:'CHRIS',    type:'premium', img:'assets/lila.png'    },
+  tommy:   { id:'tommy',   name:'TOMMY',    type:'premium', img:'assets/gelb.png'    },
+  helm:    { id:'helm',    name:'HELM',     type:'normal',  img:'assets/1.png'       },
+  medaille:{ id:'medaille',name:'MEDAILLE', type:'normal',  img:'assets/2.png'       },
+  schild:  { id:'schild',  name:'SCHILD',   type:'normal',  img:'assets/3.png'       },
+  granate: { id:'granate', name:'GRANATE',  type:'normal',  img:'assets/4.png'       },
+  scatter: { id:'scatter', name:'SCATTER',  type:'scatter', img:'assets/special.png' },
+  mystery: { id:'mystery', name:'MYSTERY',  type:'mystery', img:'assets/special.png' }
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ② GEWICHTETER SYMBOL-POOL
+// ═══════════════════════════════════════════════════════════════════════════
+
+const POOL = [
+  'wild','wild',                                                  
+  'joakim',                                                       
+  'par',                                                          
+  'chris',                                                        
+  'tommy',                                                        
+  'helm','helm','helm','helm','helm','helm','helm','helm','helm','helm',                    
+  'medaille','medaille','medaille','medaille','medaille','medaille','medaille','medaille','medaille','medaille', 
+  'schild','schild','schild','schild','schild','schild','schild','schild','schild','schild', 
+  'granate','granate','granate','granate','granate','granate','granate','granate','granate',
+  'granate','granate','granate','granate','granate','granate','granate','granate','granate',
+  'granate','granate','granate','granate',                                                  
+  'scatter','scatter','scatter','scatter','scatter'  
+];
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ③ AUSZAHLUNGSTABELLE
+// ═══════════════════════════════════════════════════════════════════════════
+
+const PAYOUTS = {
+  wild:    { 3: 4,    4: 12,   5: 40    },  
+  joakim:  { 3: 2.00, 4: 6.00, 5: 18.00 },  
+  par:     { 3: 1.60, 4: 5.00, 5: 14.00 },  
+  chris:   { 3: 1.60, 4: 5.00, 5: 14.00 },  
+  tommy:   { 3: 1.60, 4: 5.00, 5: 14.00 },  
+  helm:    { 3: 0.45, 4: 1.00, 5: 2.00  },  
+  medaille:{ 3: 0.45, 4: 1.00, 5: 2.00  },  
+  schild:  { 3: 0.12, 4: 0.36, 5: 1.20  },  
+  granate: { 3: 0.08, 4: 0.24, 5: 0.80  }   
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ④ PAYLINES
+// ═══════════════════════════════════════════════════════════════════════════
+
+const PAYLINES = [
+  [1,1,1,1,1],   
+  [0,0,0,0,0],   
+  [2,2,2,2,2],   
+  [0,1,2,1,0],   
+  [2,1,0,1,2],   
+  [0,0,1,0,0],   
+  [2,2,1,2,2],   
+  [1,0,0,0,1],   
+  [1,2,2,2,1],   
+  [0,1,1,1,0]    
+];
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ⑤ SPIELZUSTAND
+// ═══════════════════════════════════════════════════════════════════════════
+
+const ROWS = 3, COLS = 5;
+let credits = 1000.0, bet = 2.0, currency = '€', spins = 0;
+let freeSpins = 0, bonusSymbol = null;
+let chainedReels = null, lastStandReels = [];
+let activeMegaScatter = false, activeMystery = false, currentStackSymbol = null;
+let scatterTargetSymbol = null;  
+let spinning = false;
+let matrix = []; 
+let paylineAnimationLoopId = null; 
+let autoPlayActive = false;
+let autoPlayCount = 0;
+
+let battalionActive = false;
+let battalionTotal = 0;
+let battalionSpinsPlayed = 0;
+let battalionStartBalance = 0;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ⑥ WEB-AUDIO ENGINE
+// ═══════════════════════════════════════════════════════════════════════════
+
+let ctx = null;
+
+function audio() {
+  if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+  if (ctx.state === 'suspended') ctx.resume();
+  return ctx;
+}
+
+function tone(freq, type, dur, t0, vol = 0.25) {
+  const c = audio();
+  const o = c.createOscillator(), g = c.createGain();
+  const t = c.currentTime + t0;
+  o.type = type; o.frequency.setValueAtTime(freq, t);
+  g.gain.setValueAtTime(vol, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  o.connect(g); g.connect(c.destination);
+  o.start(t); o.stop(t + dur + 0.02);
+}
+
+function noise(dur, t0, vol = 0.14, cutoff = 500) {
+  const c = audio();
+  const buf = c.createBuffer(1, Math.ceil(c.sampleRate * dur), c.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random()*2-1) * 0.5;
+  const s = c.createBufferSource();
+  const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = cutoff;
+  const g = c.createGain(); const t = c.currentTime + t0;
+  g.gain.setValueAtTime(vol, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  s.buffer = buf;
+  s.connect(f); f.connect(g); g.connect(c.destination);
+  s.start(t); s.stop(t + dur + 0.02);
+}
+
+function sndSpin() {
+  noise(1.6, 0, 0.18, 350);
+  for (let i = 0; i < 14; i++) {
+    noise(0.04, i * 0.11, 0.12, 600);
+    tone(150 + Math.random()*80, 'square', 0.04, i * 0.11, 0.07);
+  }
+}
+
+function sndStop(col) {
+  noise(0.07, 0, 0.18, 700);
+  tone(180 - col * 18, 'square', 0.08, 0, 0.1);
+}
+
+function sndSmallWin() {
+  [523, 659, 784].forEach((f, i) => tone(f, 'square', 0.22, i * 0.13, 0.22));
+}
+
+function sndBigWin() {
+  [523,659,784,1047,1319].forEach((f,i) => {
+    tone(f, 'sawtooth', 0.2, i * 0.1, 0.22);
+    tone(f * 1.498, 'sine',     0.15, i * 0.1, 0.12);
+  });
+}
+
+function sndJackpot() {
+  const mel = [523,659,784,659,784,1047,784,1047,1319,1047,1319,1568];
+  mel.forEach((f,i) => tone(f, 'sawtooth', 0.16, i * 0.1, 0.3));
+  for (let i = 0; i < 18; i++) noise(0.05, i*0.07, 0.2, 800);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ⑦ MUSIK-PLAYER
+// ═══════════════════════════════════════════════════════════════════════════
+
+const BISMARCK_TRACKS = [
+  'music/Bismarck - base(1).mp3',
+  'music/Bismarck - Drive(2).mp3',
+  'music/Bismarck - Refrain(3).mp3',
+  'music/Bismarck - Battle(4).mp3'
+];
+
+let trackIdx = 0, musicOn = false;
+let musicPhase = 0;
+let bgAudio = document.getElementById('bg-audio');
+const BASE_VOLUME = 0.25;
+const BISMARCK_AUDIOS = BISMARCK_TRACKS.map((src, idx) => {
+  const audio = new Audio(src);
+  audio.preload = 'auto';
+  audio.loop = idx === 0;
+  audio.volume = 0;
+  audio.addEventListener('ended', () => {
+    if (trackIdx === idx) handleBismarckTrackEnded();
+  });
+  audio.load();
+  return audio;
+});
+bgAudio.volume = BASE_VOLUME;
+bgAudio.preload = 'auto';
+bgAudio.loop = false;
+
+const TENSION_THRESHOLDS   = [0, 20, 45, 72];   
+const TENSION_WIN_XP       = { small: 14, medium: 30, big: 52, jackpot: 80 };
+const TENSION_LOSS_DECAY   = 2.5;               
+const TENSION_STREAK_BONUS = 0.8;              
+const TENSION_LOSS_MAX     = 14;               
+const TENSION_PHASE_LABELS = ['RUHIG', 'DRIVE', 'REFRAIN', 'KAMPF'];
+const TENSION_PHASE_COLORS = ['#2e86c1', '#27ae60', '#e67e22', '#e74c3c'];
+const TENSION_PHASE_EMOJIS = ['❄️', 'RUN', '⚔️', '🔥'];
+
+let tensionXP    = 0;   
+let lossStreak   = 0;   
+let pendingPhase = -1;  
+let tensionDecayIntervalId = null; 
+
+function getCurrentMusicFile() {
+  const src = bgAudio.currentSrc || bgAudio.src;
+  if (!src) return '';
+  try {
+    return new URL(src, location.href).pathname.split('/').pop();
+  } catch {
+    return src.replace(/^.*[\\/]/, '');
+  }
+}
+
+function isBismarckTrack() {
+  const file = getCurrentMusicFile().toLowerCase();
+  return BISMARCK_TRACKS.some(path => {
+    const fileName = path.split('/').pop().toLowerCase();
+    return fileName === file || file.includes(fileName);
+  });
+}
+
+function handleBismarckTrackEnded() {
+  if (pendingPhase >= 0 && pendingPhase !== musicPhase) {
+    const goingUp = pendingPhase > musicPhase;
+    musicPhase    = pendingPhase;
+    pendingPhase  = -1;
+
+    let msg;
+    if      (musicPhase === 3) msg = '🔥 KAMPF-MODUS AKTIV — VOLLES FEUER!';
+    else if (musicPhase === 0) msg = '❄️ Die Spannung ebbt ab...';
+    else if (goingUp)          msg = `⬆ Spannung steigt → ${TENSION_PHASE_LABELS[musicPhase]}`;
+    else                       msg = `⬇ Spannung sinkt → ${TENSION_PHASE_LABELS[musicPhase]}`;
+    setTicker(msg);
+  }
+  playBismarckPhase(musicPhase);
+}
+
+function playBismarckPhase(idx) {
+  trackIdx = idx;
+  musicPhase = idx;
+  const nextAudio = BISMARCK_AUDIOS[idx];
+  if (!nextAudio) return;
+  const previousAudio = bgAudio;
+
+  if (previousAudio === nextAudio) {
+    bgAudio.currentTime = 0;
+    bgAudio.volume = 0;
+    bgAudio.playbackRate = 1.0;
+    bgAudio.play().catch(() => {});
+    fadeVolume(bgAudio, 0, BASE_VOLUME, 250);
+  } else {
+    bgAudio = nextAudio;
+    bgAudio.currentTime = 0;
+    bgAudio.volume = 0;
+    bgAudio.playbackRate = 1.0;
+    bgAudio.play().catch(() => {});
+    fadeVolume(bgAudio, 0, BASE_VOLUME, 250);
+
+    if (previousAudio && previousAudio !== bgAudio) {
+      fadeVolume(previousAudio, previousAudio.volume, 0, 250, () => {
+        previousAudio.pause();
+        previousAudio.currentTime = 0;
+      });
+    }
+  }
+
+  document.getElementById('music-info').textContent =
+    `${TENSION_PHASE_EMOJIS[idx]} Bismarck — Stufe ${idx + 1}: ${TENSION_PHASE_LABELS[idx]}`;
+}
+
+function fadeVolume(audio, from, to, durationMs, onComplete) {
+  const start = performance.now();
+  const delta = to - from;
+  audio.volume = from;
+  function step(time) {
+    const t = Math.min(1, (time - start) / durationMs);
+    audio.volume = Math.max(0, Math.min(1, from + delta * t));
+    if (t < 1) requestAnimationFrame(step);
+    else if (onComplete) onComplete();
+  }
+  requestAnimationFrame(step);
+}
+
+function getTensionLevel() {
+  for (let i = TENSION_THRESHOLDS.length - 1; i >= 0; i--) {
+    if (tensionXP >= TENSION_THRESHOLDS[i]) return i;
+  }
+  return 0;
+}
+
+function updateBismarckTension(winAmount) {
+  const mult = bet > 0 ? winAmount / bet : 0;
+  if (mult >= 0.3) {
+    lossStreak = 0;
+    const xp   = mult >= 15 ? TENSION_WIN_XP.jackpot
+                : mult >=  7 ? TENSION_WIN_XP.big
+                : mult >=  2 ? TENSION_WIN_XP.medium
+                              : TENSION_WIN_XP.small;
+    tensionXP = Math.min(100, tensionXP + xp);
+  } else {
+    lossStreak++;
+    const baseDecay = winAmount > 0 ? TENSION_LOSS_DECAY * 0.55 : TENSION_LOSS_DECAY;
+    const decay = Math.min(
+      baseDecay + lossStreak * TENSION_STREAK_BONUS,
+      TENSION_LOSS_MAX
+    );
+    tensionXP = Math.max(0, tensionXP - decay);
+  }
+
+  let newLevel = getTensionLevel();
+  if (newLevel === 3 && mult <= 4) newLevel = 2;
+  if (newLevel > musicPhase) {
+    if (musicPhase === 0) {
+      musicPhase = newLevel;
+      pendingPhase = -1;
+      playBismarckPhase(newLevel);
+    } else {
+      pendingPhase = newLevel; 
+    }
+  } else if (newLevel < musicPhase && musicPhase > 0) {
+    pendingPhase = newLevel; 
+  } else if (newLevel === musicPhase) {
+    pendingPhase = -1;
+  }
+
+  updateTensionUI();
+}
+
+function updateTensionUI() {
+  const level = getTensionLevel();
+  const fill  = document.getElementById('tension-bar-fill');
+  const label = document.getElementById('tension-label');
+  const lamps = document.querySelectorAll('.tension-lamp');
+  if (!fill || !label) return;
+
+  const lo  = TENSION_THRESHOLDS[level];
+  const hi  = level < 3 ? TENSION_THRESHOLDS[level + 1] : 100;
+  const pct = level === 3 ? 100 : Math.round(((tensionXP - lo) / (hi - lo)) * 100);
+  fill.style.width      = pct + '%';
+  fill.style.background = TENSION_PHASE_COLORS[level];
+
+  lamps.forEach((lamp, i) => {
+    const on = i <= level;
+    lamp.classList.toggle('active', on);
+    lamp.style.background = on ? TENSION_PHASE_COLORS[i] : '#0c1014';
+    lamp.style.boxShadow  = on ? `0 0 9px ${TENSION_PHASE_COLORS[i]}` : 'none';
+  });
+
+  label.textContent = `${TENSION_PHASE_EMOJIS[level]} ${TENSION_PHASE_LABELS[level]}`;
+  label.style.color  = TENSION_PHASE_COLORS[level];
+}
+
+function loadAndPlay(idx) {
+  trackIdx = idx;
+  musicPhase = idx;
+  const nextAudio = BISMARCK_AUDIOS[idx];
+  if (!nextAudio) return;
+  if (bgAudio && bgAudio !== nextAudio) {
+    bgAudio.pause();
+    bgAudio.currentTime = 0;
+  }
+  bgAudio = nextAudio;
+  bgAudio.currentTime = 0;
+  bgAudio.volume = BASE_VOLUME;
+  bgAudio.loop = idx === 0;
+  bgAudio.play().catch(()=>{});
+  document.getElementById('music-info').textContent =
+    `${TENSION_PHASE_EMOJIS[musicPhase]} Bismarck — Stufe ${musicPhase + 1}: ${TENSION_PHASE_LABELS[musicPhase]}`;
+}
+
+function startTensionDecay() {
+  if (tensionDecayIntervalId) clearInterval(tensionDecayIntervalId);
+  tensionDecayIntervalId = setInterval(() => {
+    if (tensionXP > 0) {
+      tensionXP = Math.max(0, tensionXP - 1);
+      updateTensionUI();
+    }
+  }, 5000);
+}
+
+function toggleMusic() {
+  audio(); 
+  if (BISMARCK_TRACKS.length === 0) {
+    document.getElementById('music-info').textContent =
+      '⚠ Keine Tracks — Lege die vier Bismarck-Teilstücke in music/ und passe BISMARCK_TRACKS an';
+    return;
+  }
+  if (musicOn) {
+    bgAudio.pause(); musicOn = false;
+    document.getElementById('btn-music').textContent = '▶ PLAY';
+  } else {
+    if (!bgAudio.src || bgAudio.src === location.href) loadAndPlay(0);
+    else bgAudio.play().catch(()=>{});
+    musicOn = true;
+    document.getElementById('btn-music').textContent = '⏸ PAUSE';
+  }
+}
+
+function setVolume(v) { bgAudio.volume = v / 100; }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ⑧ RASTER AUFBAUEN
+// ═══════════════════════════════════════════════════════════════════════════
+
+function buildGrid() {
+  const wrap = document.getElementById('reels-wrap');
+  const existingReels = wrap.querySelectorAll('.reel');
+  existingReels.forEach(reel => reel.remove());
+  
+  for (let c = 0; c < COLS; c++) {
+    const reel = document.createElement('div');
+    reel.className = 'reel'; reel.id = `reel-${c}`;
+    for (let r = 0; r < ROWS; r++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell'; cell.id = `c-${r}-${c}`;
+      cell.innerHTML = symHTML('helm'); 
+      reel.appendChild(cell);
+    }
+    wrap.appendChild(reel);
+  }
+  randomFill();
+}
+
+function symHTML(id) {
+  const s = SYM[id];
+  return `<img class="sym" src="${s.img}" alt="${s.name}" draggable="false">`
+       + `<span class="sym-name">${s.name}</span>`;
+}
+
+function setCell(r, c, id) {
+  const s = SYM[id];
+  const el = document.getElementById(`c-${r}-${c}`);
+  if (!el) return;
+  el.className = `cell t-${s.type}`;
+  el.innerHTML = symHTML(id);
+  if (!matrix[r]) matrix[r] = [];
+  matrix[r][c] = id;
+}
+
+function randomFill() {
+  matrix = Array.from({length:ROWS}, () => Array(COLS).fill(null));
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++)
+      setCell(r, c, rndSym());
+}
+
+function rndSym() { return POOL[Math.floor(Math.random() * POOL.length)]; }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ⑨ SPIN-ABLAUF
+// ═══════════════════════════════════════════════════════════════════════════
+
+const reelTimers = []; 
+const FEATURE_SYMBOLS = ['joakim','chris','par','tommy'];
+const FREE_SPIN_BONUS = 7;            
+const FREE_SPIN_RETRIGGER = 9;        
+const MEGA_SCATTER_CHANCE = 0.012;    
+const CHAINED_REELS_CHANCE = 0.06;    
+const LAST_STAND_CHANCE = 0.03;       
+const MEGA_SYMBOL_CHANCE = 0.06;
+const MYSTERY_COUNT = 1;
+const MYSTERY_CHANCE = 0.30;
+const STACK_CHANCE = 0.015;
+
+function formatAmount(value) {
+  return Number.isInteger(value) ? value.toFixed(0) : value.toFixed(2);
+}
+
+function pickRandomReels(count) {
+  const reels = [0,1,2,3,4];
+  const chosen = [];
+  while (chosen.length < count && reels.length) {
+    const idx = Math.floor(Math.random() * reels.length);
+    chosen.push(reels.splice(idx, 1)[0]);
+  }
+  return chosen;
+}
+
+function chooseChainedSegment() {
+  const len = Math.random() < 0.5 ? 2 : 3;
+  const maxStart = COLS - len;
+  const start = Math.floor(Math.random() * (maxStart + 1));
+  
+  // Stelle sicher, dass die Kette keine Scatter enthält
+  // Wir geben hier einfach das Segment zurück, die Validierung passiert in der Zuweisung
+  return { start, len };
+}
+
+function selectSpinFeatures() {
+  const stackActive = Math.random() < STACK_CHANCE || (freeSpins > 0 && Math.random() < 0.35);
+  currentStackSymbol = stackActive ? (freeSpins > 0 && bonusSymbol ? bonusSymbol : FEATURE_SYMBOLS[Math.floor(Math.random() * FEATURE_SYMBOLS.length)]) : null;
+  activeMystery = Math.random() < MYSTERY_CHANCE || freeSpins > 0;
+  activeMegaScatter = false;
+  chainedReels = null;
+  lastStandReels = [];
+  const scatterTargetPool = ['par','joakim','chris','tommy','helm','medaille','schild','granate'];
+  scatterTargetSymbol = scatterTargetPool[Math.floor(Math.random() * scatterTargetPool.length)];
+
+  if (!freeSpins) {
+    if (Math.random() < LAST_STAND_CHANCE) lastStandReels = pickRandomReels(Math.random() < 0.5 ? 1 : 2);
+    if (Math.random() < CHAINED_REELS_CHANCE) chainedReels = chooseChainedSegment();
+    if (Math.random() < MEGA_SCATTER_CHANCE) activeMegaScatter = true;
+  } else {
+    if (Math.random() < LAST_STAND_CHANCE) lastStandReels = pickRandomReels(Math.random() < 0.5 ? 1 : 2);
+  }
+}
+
+function updateReelFeatureVisuals() {
+  for (let c = 0; c < COLS; c++) {
+    const reel = document.getElementById(`reel-${c}`);
+    if (!reel) continue;
+    reel.classList.remove('featured','chained','last-stand','battalion');
+
+    if (freeSpins > 0) {
+      reel.classList.add('battalion');
+    } else if (chainedReels && c >= chainedReels.start && c < chainedReels.start + chainedReels.len) {
+      reel.classList.add('chained');
+    } else if (lastStandReels.includes(c)) {
+      reel.classList.add('last-stand');
+    } else if (activeMegaScatter || activeMystery) {
+      reel.classList.add('featured');
+    }
+  }
+
+  const badge = document.getElementById('freespin-badge');
+  if (badge) {
+    if (freeSpins > 0) {
+      badge.style.display = 'block';
+      badge.textContent = freeSpins;
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+}
+
+function buildSpinMatrix() {
+  const grid = Array.from({length: ROWS}, () => Array.from({length: COLS}, () => rndSym()));
+  if (activeMegaScatter) applyMegaScatter(grid);
+  applyMetalStacks(grid, currentStackSymbol);
+  applyMegaSymbols(grid);
+  applyMysterySymbols(grid);
+  applyLastStand(grid);
+  if (chainedReels) applyChainedReels(grid);
+  if (freeSpins > 0) {
+    linkMiddleReels(grid);
+    applyBattalionScatterBoost(grid);  
+  }
+  return grid;
+}
+
+function applyBattalionScatterBoost(grid) {
+  const extraCount = 1 + Math.floor(Math.random() * 3); 
+  let placed = 0, attempts = 0;
+  
+  while (placed < extraCount && attempts < 20) {
+    const r = Math.floor(Math.random() * ROWS);
+    const c = Math.floor(Math.random() * COLS);
+    
+    if (grid[r][c] !== 'scatter' && grid[r][c] !== 'wild' && grid[r][c] !== bonusSymbol) {
+      grid[r][c] = 'scatter';
+      placed++;
+    }
+    attempts++;
+  }
+}
+
+function applyMegaScatter(grid) {
+  const start = Math.floor(Math.random() * 3);
+  for (let c = start; c < start + 3; c++) {
+    for (let r = 0; r < ROWS; r++) {
+      grid[r][c] = 'scatter';
+    }
+  }
+}
+
+function applyChainedReels(grid) {
+  if (!chainedReels) return;
+
+  const segmentStart = chainedReels.start;
+  const segmentLen = chainedReels.len;
+
+  // 1. Wähle ein Symbol, das kein Scatter und kein Mystery ist
+  let syncSymbol;
+  const nonScatterPool = Object.keys(SYM).filter(id => SYM[id].type !== 'scatter' && SYM[id].type !== 'mystery');
+  syncSymbol = nonScatterPool[Math.floor(Math.random() * nonScatterPool.length)];
+
+  // 2. Wende dieses Symbol auf alle Felder im Segment an
+  for (let c = segmentStart; c < segmentStart + segmentLen; c++) {
+    for (let r = 0; r < ROWS; r++) {
+      grid[r][c] = syncSymbol; 
+    }
+  }
+
+  // 3. Markiere Walzen visuell
+  for (let c = segmentStart; c < segmentStart + segmentLen; c++) {
+    document.getElementById(`reel-${c}`)?.classList.add('chained');
+  }
+}
+
+function applyMetalStacks(grid, symbol) {
+  if (!symbol) return;
+  for (let c = 0; c < COLS; c++) {
+    const length = Math.floor(Math.random() * 3) + 1;
+    const rowStart = Math.floor(Math.random() * (ROWS - length + 1));
+    for (let r = rowStart; r < rowStart + length; r++) {
+      if (grid[r][c] !== 'scatter') grid[r][c] = symbol;
+    }
+  }
+}
+
+// ── KOPIERLOGIK FÜR DIE FUNKTIONEN ──
+function applyMegaSymbols(grid) {
+  if (Math.random() > MEGA_SYMBOL_CHANCE) return;
+  const blockSize = Math.random() < 0.5 ? 2 : 3;
+  const maxCol = COLS - blockSize;
+  const maxRow = ROWS - blockSize;
+  const startCol = Math.floor(Math.random() * (maxCol + 1));
+  const startRow = Math.floor(Math.random() * (maxRow + 1));
+  const symbol = FEATURE_SYMBOLS[Math.floor(Math.random() * FEATURE_SYMBOLS.length)];
+  for (let c = startCol; c < startCol + blockSize; c++) {
+    for (let r = startRow; r < startRow + blockSize; r++) {
+      if (grid[r][c] !== 'scatter') grid[r][c] = symbol;
+    }
+  }
+}
+
+function applyMysterySymbols(grid) {
+  if (!activeMystery) return;
+  let placed = 0;
+  let attempts = 0;
+  while (placed < MYSTERY_COUNT && attempts < 30) {
+    const r = Math.floor(Math.random() * ROWS);
+    const c = Math.floor(Math.random() * COLS);
+    if (!isScatter(grid[r][c]) && grid[r][c] !== 'wild' && grid[r][c] !== 'mystery') {
+      grid[r][c] = 'mystery';
+      placed++;
+    }
+    attempts++;
+  }
+}
+
+function applyLastStand(grid) {
+  lastStandReels.forEach(c => {
+    for (let r = 0; r < ROWS; r++) grid[r][c] = 'wild';
+  });
+}
+
+function linkMiddleReels(grid) {
+  for (let r = 0; r < ROWS; r++) {
+    const symbol = grid[r][1];
+    grid[r][2] = symbol;
+    grid[r][3] = symbol;
+  }
+}
+
+function transformMysteries(grid) {
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      if (grid[r][c] === 'mystery') grid[r][c] = currentStackSymbol || FEATURE_SYMBOLS[0];
+    }
+  }
+}
+
+function flashScatterTransformation(grid, onTransform) {
+  const affected = [];
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      if (grid[r][c] === 'scatter') {
+        const cell = document.getElementById(`c-${r}-${c}`);
+        if (cell) {
+          cell.classList.add('scatter-transform');
+          affected.push(cell);
+        }
+      }
+    }
+  }
+  if (affected.length === 0) {
+    onTransform();
+    return;
+  }
+  setTimeout(() => {
+    onTransform();
+    affected.forEach(cell => cell.classList.remove('scatter-transform'));
+  }, 180);
+}
+
+function transformScattersToBonus(grid) {
+  if (!bonusSymbol) return;
+  const target = bonusSymbol;
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      if (grid[r][c] === 'scatter') grid[r][c] = target;
+    }
+  }
+}
+
+function transformScattersToTarget(grid, targetSym) {
+  if (!targetSym) return;
+  const target = targetSym;
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      if (grid[r][c] === 'scatter') grid[r][c] = target;
+    }
+  }
+}
+
+function updateGridDisplay(grid) {
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      setCell(r, c, grid[r][c]);
+    }
+  }
+}
+
+function countScatters(grid) {
+  let count = 0;
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      if (isScatter(grid[r][c])) count++;
+    }
+  }
+  return count;
+}
+
+function isScatter(symbol) {
+  return symbol === 'scatter';
+}
+
+function startBattalionSpins(retrigger = false) {
+  freeSpins += FREE_SPIN_BONUS;
+
+  if (!retrigger) {
+    battalionActive = true;
+    battalionTotal = 0;
+    battalionSpinsPlayed = 0;
+    battalionStartBalance = credits;
+  }
+
+  const message = retrigger
+    ? `🔥 Battalion Spins retriggert! +${FREE_SPIN_BONUS} Freispiele!`
+    : `🔥 Battalion Spins aktiviert! Bonus-Symbol: ${SYM[bonusSymbol]?.name || '?'}`;
+  setTicker(message);
+  document.getElementById('ticker').classList.add('flash');
+
+  const banner = document.getElementById('battalion-banner');
+  const bannerText = document.getElementById('battalion-banner-text');
+  if (banner && bannerText) {
+    bannerText.textContent = retrigger ? '⚔ RETRIGGER! ⚔' : '⚔ BATTALION SPINS ⚔';
+    banner.classList.add('show');
+    setTimeout(() => banner.classList.remove('show'), 2200);
+  }
+
+  sndJackpot();
+  tensionXP = 95;
+  musicPhase = 3;
+  pendingPhase = -1;
+  if (musicOn) playBismarckPhase(3);
+  updateTensionUI();
+
+  // Wenn Autoplay aktiv ist, nächsten Spin nach dem Banner anstarten
+  if (autoPlayActive) {
+    setTimeout(() => {
+      if (autoPlayActive && !spinning) spin();
+    }, 2400);
+  }
+}
+
+function triggerBattalionSpins(retrigger = false) {
+  if (!bonusSymbol) {
+    const bonusPool = [
+      'par', 'par', 'par', 'par',
+      'joakim', 'joakim', 'joakim', 'joakim', 'joakim',
+      'chris', 'chris', 'chris', 'chris', 'chris', 'chris',
+      'tommy', 'tommy', 'tommy', 'tommy', 'tommy', 'tommy',
+      'helm', 'helm', 'helm', 'helm', 'helm', 'helm', 'helm',
+      'medaille', 'medaille', 'medaille', 'medaille', 'medaille', 'medaille', 'medaille',
+      'schild', 'schild', 'schild', 'schild', 'schild', 'schild', 'schild', 'schild',
+      'granate', 'granate', 'granate', 'granate', 'granate', 'granate', 'granate', 'granate', 'granate'
+    ];
+    bonusSymbol = bonusPool[Math.floor(Math.random() * bonusPool.length)];
+  }
+
+  if (!retrigger) {
+    const existing = document.getElementById('battalion-confirm');
+    if (existing) existing.remove();
+
+    // Autoplay pausieren bis der Spieler bestätigt hat
+    const wasAutoPlay = autoPlayActive;
+    if (wasAutoPlay) {
+      autoPlayActive = false; // temporär anhalten, NICHT stopAutoPlay (zähler behalten)
+    }
+
+    const overlay = document.createElement('div');
+    overlay.id = 'battalion-confirm';
+    overlay.innerHTML = `
+      <div class="battalion-confirm-card">
+        <h3>BATTALION SPINS</h3>
+        <p>Das Scatter-Symbol wird durch <strong>${SYM[bonusSymbol]?.name || 'Bonus'}</strong> ersetzt. Während der 7 Freispiele ersetzen alle Scatter automatisch dieses Symbol — wähle jetzt und bestätige!</p>
+        <div class="battalion-symbol-preview"><img src="${SYM[bonusSymbol]?.img || 'assets/1.png'}" alt="Bonus-Symbol"></div>
+        <button class="battalion-confirm-btn" type="button">START</button>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    overlay.querySelector('.battalion-confirm-btn').addEventListener('click', () => {
+      overlay.remove();
+      // Autoplay wieder einschalten wenn es vorher aktiv war
+      if (wasAutoPlay) autoPlayActive = true;
+      startBattalionSpins(false);
+    });
+    return;
+  }
+  startBattalionSpins(true);
+}
+
+function triggerScatterTension(scatterCount) {
+  const remaining = FREE_SPIN_RETRIGGER - scatterCount;
+  setTicker(`⚡ ${scatterCount} SCATTER! Noch ${remaining} bis zu den BATTALION SPINS!`);
+  document.getElementById('ticker').classList.add('flash');
+  
+  if (musicPhase < 1) {
+    tensionXP = Math.max(tensionXP, TENSION_THRESHOLDS[1] + 5);
+    musicPhase = 1;
+    pendingPhase = -1;
+    if (musicOn) playBismarckPhase(1);
+    updateTensionUI();
+  }
+  if (scatterCount >= 7 && musicPhase < 2) {
+    tensionXP = Math.max(tensionXP, TENSION_THRESHOLDS[2] + 5);
+    musicPhase = 2;
+    if (musicOn) playBismarckPhase(2);
+    updateTensionUI();
+  }
+  showScatterBuildupAnimation(scatterCount);
+}
+
+function showScatterBuildupAnimation(scatterCount) {
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      if (matrix[r][c] === 'scatter') {
+        const cell = document.getElementById(`c-${r}-${c}`);
+        if (cell) {
+          cell.classList.add('scatter-buildup');
+          setTimeout(() => cell.classList.remove('scatter-buildup'), 3000);
+        }
+      }
+    }
+  }
+  
+  const existing = document.getElementById('scatter-counter-overlay');
+  if (existing) existing.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'scatter-counter-overlay';
+  overlay.innerHTML = `<div class="sco-inner"><span class="sco-count">${scatterCount}</span><span class="sco-slash"> / 9</span><span class="sco-label">SCATTER</span></div>`;
+  document.body.appendChild(overlay);
+  requestAnimationFrame(() => overlay.classList.add('show'));
+  setTimeout(() => {
+    overlay.classList.remove('show');
+    setTimeout(() => overlay.remove(), 500);
+  }, 2800);
+}
+
+function spin() {
+  if (spinning) return;
+  stopPaylineAnimation();
+  
+  const isFreeRound = freeSpins > 0;
+  if (!isFreeRound && credits < bet) { setTicker('⚠ Zu wenig Guthaben! Lade dein Magazin nach!'); return; }
+
+  audio(); spinning = true;
+  if (!isFreeRound) credits -= bet;
+  spins++;
+  if (isFreeRound) freeSpins--;
+  updateUI();
+  document.getElementById('btn-spin').disabled = true;
+  document.getElementById('d-win').textContent = `— ${currency}`;
+  document.getElementById('ticker').classList.remove('flash');
+  document.getElementById('pl-bar').classList.remove('lit');
+  document.querySelectorAll('.cell.win').forEach(el => el.classList.remove('win'));
+  document.querySelectorAll('.cell.mega-symbol').forEach(el => el.classList.remove('mega-symbol'));
+  document.querySelectorAll('.mega-overlay').forEach(el => el.remove());
+  document.querySelectorAll('.feature-pill').forEach(el => el.remove());
+
+  selectSpinFeatures();
+  updateReelFeatureVisuals();
+  const final = buildSpinMatrix();
+
+  if (isFreeRound) {
+    setTicker(`⚔ Battalion Spins — ${freeSpins + 1} → ${freeSpins} verbleibend`);
+  } else if (activeMegaScatter) {
+    setTicker('💎 MEGA SCATTER — 3 Walzen verknüpft! 9 Scatter erscheinen...');
+  } else if (chainedReels) {
+    setTicker(`🔗 CHAINED REELS aktiviert! Walzen ${chainedReels.start+1}–${chainedReels.start+chainedReels.len} synchron!`);
+  } else if (lastStandReels.length > 0) {
+    setTicker(`🔥 LAST STAND! Walze(n) ${lastStandReels.map(r=>r+1).join(', ')} werden WILD!`);
+  } else {
+    setTicker('Die Walzen drehen sich... Feuer frei!');
+  }
+  sndSpin();
+
+  for (let c = 0; c < COLS; c++) {
+    const reel = document.getElementById(`reel-${c}`);
+    const dur = (0.09 + Math.random() * 0.12).toFixed(3) + 's'; 
+    const blurMax = Math.floor(4 + Math.random() * 8); 
+    const blurMin = Math.floor(Math.random() * 2); 
+    const translate = Math.floor(6 + Math.random() * 12); 
+    const rot = (Math.random() * 4 - 2).toFixed(2); 
+    const delay = (Math.random() * 0.06).toFixed(3) + 's';
+    const symDur = (0.32 + Math.random() * 0.4).toFixed(3) + 's';
+    const symTranslate = Math.floor(10 + Math.random() * 20); 
+    const symBlur = (0.6 + Math.random() * 1.8).toFixed(2); 
+    reel.style.setProperty('--spin-dur', dur);
+    reel.style.setProperty('--spin-blur-min', String(blurMin));
+    reel.style.setProperty('--spin-blur-max', String(blurMax));
+    reel.style.setProperty('--spin-translate', String(translate));
+    reel.style.setProperty('--spin-rot', String(rot));
+    reel.style.setProperty('--spin-delay', delay);
+    reel.style.setProperty('--sym-dur', symDur);
+    reel.style.setProperty('--sym-translate', String(symTranslate));
+    reel.style.setProperty('--sym-blur', String(symBlur));
+    reel.classList.add('spinning');
+    reelTimers[c] = setInterval(() => {
+      for (let r = 0; r < ROWS; r++) {
+        const el = document.getElementById(`c-${r}-${c}`);
+        if (el) el.innerHTML = symHTML(rndSym());
+      }
+    }, 75);
+  }
+
+  for (let c = 0; c < COLS; c++) {
+    setTimeout(() => stopReel(c, final, c === COLS-1), 900 + c * 350);
+  }
+}
+
+function stopReel(c, final, isLast) {
+  clearInterval(reelTimers[c]);
+  const reel = document.getElementById(`reel-${c}`);
+  reel.classList.remove('spinning');
+  for (let r = 0; r < ROWS; r++) setCell(r, c, final[r][c]);
+  sndStop(c);
+
+  if (chainedReels && c === chainedReels.start) {
+    const pill = document.createElement('div');
+    pill.className = 'feature-pill';
+    pill.textContent = `CHAINED ×${chainedReels.len}`;
+    reel.style.position = 'relative';
+    reel.appendChild(pill);
+    setTimeout(() => pill.remove(), 2000);
+  }
+
+  if (lastStandReels.includes(c)) {
+    const pill = document.createElement('div');
+    pill.className = 'feature-pill';
+    pill.style.background = '#e74c3c';
+    pill.textContent = 'LAST STAND';
+    reel.style.position = 'relative';
+    reel.appendChild(pill);
+    setTimeout(() => pill.remove(), 2000);
+  }
+
+  if (isLast) {
+    setTimeout(() => evalWin(), 180);
+  }
+}
+
+function markMegaSymbolCells() {
+  const MEGA_ALLOWED = ['wild', 'joakim', 'par', 'chris', 'tommy'];
+  const taken = new Set();
+  for (const blockSize of [3, 2]) {
+    for (let sc = 0; sc <= COLS - blockSize; sc++) {
+      for (let sr = 0; sr <= ROWS - blockSize; sr++) {
+        const sym = matrix[sr][sc];
+        if (!sym || sym === 'scatter' || sym === 'wild' || sym === 'mystery') continue;
+        if (!MEGA_ALLOWED.includes(sym)) continue;
+        
+        let overlap = false;
+        for (let dc = 0; dc < blockSize && !overlap; dc++)
+          for (let dr = 0; dr < blockSize && !overlap; dr++)
+            if (taken.has(`${sr+dr}-${sc+dc}`)) overlap = true;
+        if (overlap) continue;
+        let isBlock = true;
+        for (let dc = 0; dc < blockSize && isBlock; dc++)
+          for (let dr = 0; dr < blockSize && isBlock; dr++)
+            if (matrix[sr+dr][sc+dc] !== sym) isBlock = false;
+        if (isBlock) {
+          for (let dc = 0; dc < blockSize; dc++)
+            for (let dr = 0; dr < blockSize; dr++) {
+              document.getElementById(`c-${sr+dr}-${sc+dc}`)?.classList.add('mega-symbol');
+              taken.add(`${sr+dr}-${sc+dc}`);
+            }
+
+          const wrap   = document.getElementById('reels-wrap');
+          const first  = document.getElementById(`c-${sr}-${sc}`);
+          const last   = document.getElementById(`c-${sr+blockSize-1}-${sc+blockSize-1}`);
+          if (wrap && first && last) {
+            const wRect = wrap.getBoundingClientRect();
+            const fRect = first.getBoundingClientRect();
+            const lRect = last.getBoundingClientRect();
+            const overlay = document.createElement('div');
+            overlay.className = 'mega-overlay';
+            overlay.style.left   = (fRect.left - wRect.left) + 'px';
+            overlay.style.top    = (fRect.top  - wRect.top)  + 'px';
+            overlay.style.width  = (lRect.right  - fRect.left) + 'px';
+            overlay.style.height = (lRect.bottom - fRect.top)  + 'px';
+            overlay.innerHTML = `<img src="${SYM[sym].img}" alt="${SYM[sym].name}">`;
+            wrap.appendChild(overlay);
+          }
+
+          const reel = document.getElementById(`reel-${sc}`);
+          if (reel) {
+            const pill = document.createElement('div');
+            pill.className = 'feature-pill';
+            pill.style.background = '#9050cc';
+            pill.textContent = `MEGA ${blockSize}×${blockSize}`;
+            reel.appendChild(pill);
+            setTimeout(() => pill.remove(), 2500);
+          }
+        }
+      }
+    }
+  }
+}
+
+function winTier(total) {
+  if (!bet) return null;
+  const m = total / bet;
+  if (m >= 50) return { cls: 'tier-jackpot', label: 'MEGA JACKPOT', sub: 'PRIMO VICTORIA' };
+  if (m >= 25) return { cls: 'tier-epic',    label: 'EPIC WIN',    sub: 'Gott Mit Uns' };
+  if (m >= 10) return { cls: 'tier-mega',    label: 'MEGA WIN',    sub: 'Blood & Iron' };
+  if (m >=  5) return { cls: '',             label: 'BIG WIN',     sub: 'Schwere Salve' };
+  return null;
+}
+
+function showWinPopup(amount, tier, onDone) {
+  const old = document.getElementById('win-popup');
+  if (old) old.remove();
+  const pop = document.createElement('div');
+  pop.id = 'win-popup';
+  pop.className = `win-popup ${tier.cls}`;
+  const freeSpinText = freeSpins > 0 ? `<div class="wp-freespins">${freeSpins} FREISPIELE VERBLEIBEND</div>` : '';
+  pop.innerHTML = `
+    <div class="wp-title">${tier.label}</div>
+    <div class="wp-amount">+ ${formatAmount(amount)} ${currency}</div>
+    ${freeSpinText}
+  `;
+  document.body.appendChild(pop);
+  
+  for (let i = 0; i < 24; i++) {
+    const s = document.createElement('div');
+    s.className = 'wp-spark';
+    const angle = (Math.PI * 2 * i) / 24 + Math.random() * 0.4;
+    const dist  = 220 + Math.random() * 220;
+    s.style.left = '50%'; s.style.top = '50%';
+    s.style.setProperty('--end-transform',
+      `translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist}px) scale(0.3)`);
+    s.style.background = ['#f5c842','#e74c3c','#9050cc','#2ecc71'][i%4];
+    s.style.animationDelay = (Math.random()*0.3)+'s';
+    pop.appendChild(s);
+  }
+  requestAnimationFrame(() => pop.classList.add('show'));
+  const dur = tier.cls === 'tier-jackpot' ? 4200 : tier.cls === 'tier-epic' ? 3400 : tier.cls === 'tier-mega' ? 2800 : 2200;
+  // Bei Autoplay-Bestätigung bleibt das Popup länger (bis der Dialog kommt)
+  const mult = bet > 0 ? amount / bet : 0;
+  const needConfirm = autoPlayActive && ((autoPlayConfirmMeg && mult >= 10) || (autoPlayConfirmBig && mult >= 5 && mult < 10));
+  const actualDur = needConfirm ? dur + 1200 : dur;
+  const dismissTimer = setTimeout(() => {
+    pop.classList.remove('show');
+    setTimeout(() => { pop.remove(); onDone && onDone(); }, 350);
+  }, actualDur);
+  // Klick schließt das Popup frühzeitig (nur wenn kein Confirm nötig)
+  pop.style.cursor = 'pointer';
+  pop.addEventListener('click', () => {
+    if (needConfirm) return;
+    clearTimeout(dismissTimer);
+    pop.classList.remove('show');
+    setTimeout(() => { pop.remove(); onDone && onDone(); }, 350);
+  });
+}
+
+function showBattalionSummary(totalWon, spinsPlayed) {
+  const profit = totalWon; 
+  let card = document.getElementById('battalion-summary');
+  if (card) card.remove();
+  card = document.createElement('div');
+  card.id = 'battalion-summary';
+  card.className = 'battalion-summary';
+  const tier = winTier(totalWon);
+  const headline = tier ? tier.label : 'BATTALION SPINS ENDE';
+  card.innerHTML = `
+    <div class="bs-card">
+      <h2>⚔ ${headline} ⚔</h2>
+      <div class="bs-amount">+ ${formatAmount(profit)} ${currency}</div>
+      <div class="bs-stats">${spinsPlayed} FREISPIELE · ${bet > 0 ? (totalWon/bet).toFixed(2) : '0'}× EINSATZ</div>
+      <button class="bs-close" onclick="this.closest('.battalion-summary').classList.remove('show'); setTimeout(()=>this.closest('.battalion-summary')?.remove(), 350);">FORTSETZEN</button>
+    </div>
+  `;
+  document.body.appendChild(card);
+  requestAnimationFrame(() => card.classList.add('show'));
+  sndJackpot();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ⑨.5 PAYLINE BLITZ-ANIMATIONEN
+// ═══════════════════════════════════════════════════════════════════════════
+
+function calculatePathLength(points) {
+  let length = 0;
+  for (let i = 0; i < points.length - 1; i++) {
+    const dx = points[i + 1][0] - points[i][0];
+    const dy = points[i + 1][1] - points[i][1];
+    length += Math.sqrt(dx * dx + dy * dy);
+  }
+  return length;
+}
+
+function animatePaylineWins(winningLines, onComplete) {
+  if (!winningLines || winningLines.length === 0) {
+    if (onComplete) onComplete();
+    return;
+  }
+
+  const svg = document.getElementById('payline-svg');
+  const reelsWrap = document.getElementById('reels-wrap');
+  
+  const rect = reelsWrap.getBoundingClientRect();
+  svg.setAttribute('width', rect.width);
+  svg.setAttribute('height', rect.height);
+  svg.innerHTML = '';
+
+  winningLines.forEach((lineIndices, idx) => {
+    const points = [];
+    for (let col = 0; col < COLS; col++) {
+      const cellId = `c-${lineIndices[col]}-${col}`;
+      const cell = document.getElementById(cellId);
+      if (!cell) continue;
+
+      const cellRect = cell.getBoundingClientRect();
+      const wrapRect = reelsWrap.getBoundingClientRect();
+      
+      const x = cellRect.left - wrapRect.left + cellRect.width / 2;
+      const y = cellRect.top - wrapRect.top + cellRect.height / 2;
+      points.push([x, y]);
+    }
+
+    if (points.length < 2) return;
+
+    const pathLength = calculatePathLength(points);
+
+    const glowPath = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+    glowPath.setAttribute('points', points.map(p => `${p[0]},${p[1]}`).join(' '));
+    glowPath.setAttribute('class', 'payline-stroke payline-glow');
+    
+    if (pathLength > 0) {
+      glowPath.style.strokeDasharray = pathLength;
+      glowPath.style.strokeDashoffset = pathLength;
+    }
+    svg.appendChild(glowPath);
+
+    const corePath = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+    corePath.setAttribute('points', points.map(p => `${p[0]},${p[1]}`).join(' '));
+    corePath.setAttribute('class', 'payline-stroke payline-core');
+    
+    if (pathLength > 0) {
+      corePath.style.strokeDasharray = pathLength;
+      corePath.style.strokeDashoffset = pathLength;
+    }
+    svg.appendChild(corePath);
+
+    setTimeout(() => {
+      glowPath.classList.add('animate');
+      corePath.classList.add('animate');
+      
+      setTimeout(() => {
+        glowPath.classList.remove('animate');
+        corePath.classList.remove('animate');
+      }, 1000);
+    }, idx * 500); 
+  });
+
+  const totalDelay = winningLines.length * 500 + 1100;
+  if (paylineAnimationLoopId) clearTimeout(paylineAnimationLoopId);
+  
+  paylineAnimationLoopId = setTimeout(() => {
+    animatePaylineWins(winningLines, onComplete);
+  }, totalDelay);
+}
+
+function stopPaylineAnimation() {
+  if (paylineAnimationLoopId) {
+    clearTimeout(paylineAnimationLoopId);
+    paylineAnimationLoopId = null;
+  }
+  clearPaylineAnimations();
+}
+
+function clearPaylineAnimations() {
+  const svg = document.getElementById('payline-svg');
+  if (svg) svg.innerHTML = '';
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ⑩ GEWINNAUSWERTUNG (ASYNCHRON REPARIERT)
+// ═══════════════════════════════════════════════════════════════════════════
+
+function evalWin() {
+  clearPaylineAnimations();
+  transformMysteries(matrix);
+  const scatterCount = countScatters(matrix);
+
+  // Kapselung der Auszahlungslogik, damit wir sie gezielt NACH der Transformation ausführen können
+  const proceedWithPayouts = () => {
+    updateGridDisplay(matrix); 
+    markMegaSymbolCells();
+    let total = 0;
+    const winCells = new Set();
+    const winningPaylines = []; 
+    const msgs = [];
+
+    PAYLINES.forEach(line => {
+      const seq = line.map((row, col) => matrix[row][col]);
+      const base = seq.find(s => s !== 'wild' && !isScatter(s)) ?? 'wild';
+      let cnt = 0;
+      for (const s of seq) {
+        if (s === 'wild' || s === base) cnt++;
+        else break;
+      }
+      if (cnt < 3) return;
+      const payout = PAYOUTS[base]?.[cnt] ?? 0;
+      if (!payout) return;
+      
+      const win = Math.round((payout * bet / 2) * 100) / 100;  
+      total += win;
+      for (let col = 0; col < cnt; col++) winCells.add(`${line[col]}-${col}`);
+      winningPaylines.push(line); 
+      const nm = SYM[base].name;
+      if      (cnt === 5 && base === 'wild') msgs.push('🏆 PRIMO VICTORIA! JACKPOT — WILD AUF ALLEN WALZEN!');
+      else if (cnt === 5)                    msgs.push(`🎖 5× ${nm}! GOTT MIT UNS!`);
+      else if (cnt === 4)                    msgs.push(`⚔ 4× ${nm}! BLOOD & IRON!`);
+      else                                   msgs.push(`💥 3× ${nm}!`);
+    });
+
+    if (battalionActive) {
+      battalionSpinsPlayed++;
+      battalionTotal += total;
+    }
+
+    if (total > 0) {
+      credits += total;
+      document.getElementById('d-win').textContent = `${formatAmount(total)} ${currency}`;
+      setTicker(msgs[0] + (msgs.length > 1 ? ` +${msgs.length-1} weitere Linien!` : ''));
+      document.getElementById('ticker').classList.add('flash');
+      document.getElementById('pl-bar').classList.add('lit');
+      winCells.forEach(k => document.getElementById(`c-${k}`)?.classList.add('win'));
+      if      (total >= bet * 10) sndJackpot();
+      else if (total >= bet * 3)  sndBigWin();
+      else                         sndSmallWin();
+
+      animatePaylineWins(winningPaylines, () => {
+        const tier = winTier(total);
+        if (tier) showWinPopup(total, tier);
+      });
+    } else {
+      if (freeSpins > 0) setTicker(`Battalion Spins: ${freeSpins} freie Spiele verbleiben.`);
+      else setTicker('Kein Treffer. Bereite die nächste Salve vor!');
+    }
+
+    if (battalionActive && freeSpins <= 0) {
+      const summaryTotal = battalionTotal;
+      const summaryCount = battalionSpinsPlayed;
+      battalionActive = false;
+      bonusSymbol = null; 
+      setTimeout(() => showBattalionSummary(summaryTotal, summaryCount), 1200);
+    } else if (!battalionActive && freeSpins <= 0 && scatterCount < FREE_SPIN_RETRIGGER) {
+    bonusSymbol = null;
+  }
+
+    updateBismarckTension(total);
+    updateUI();
+    spinning = false;
+    document.getElementById('btn-spin').disabled = false;
+
+    if (!freeSpins) {
+      setTimeout(() => {
+        for (let c = 0; c < COLS; c++) {
+          const reel = document.getElementById(`reel-${c}`);
+          if (reel) reel.classList.remove('chained','last-stand','featured','battalion');
+        }
+      }, total > 0 ? 1800 : 600);
+    }
+
+    // Autoplay weiterschalten — hier ist total korrekt im Scope
+    if (autoPlayActive) {
+      if (credits < bet && freeSpins <= 0) {
+        stopAutoPlay();
+      } else {
+        scheduleNextAutoSpin(total);
+      }
+    }
+  };
+
+  // Asynchrone Weichenstellung basierend auf den Scattern
+  if (freeSpins > 0 || battalionActive) {
+    if (scatterCount >= FREE_SPIN_RETRIGGER) {
+      flashScatterTransformation(matrix, () => {
+        transformScattersToBonus(matrix);
+        updateGridDisplay(matrix);
+        proceedWithPayouts();
+      });
+      triggerBattalionSpins(true);
+    } else if (scatterCount > 0) {
+      flashScatterTransformation(matrix, () => {
+        transformScattersToBonus(matrix);
+        updateGridDisplay(matrix);
+        proceedWithPayouts();
+      });
+      setTicker(`🔥 Scatter → ${SYM[bonusSymbol]?.name || 'Bonus'}! Kein Retrigger.`);
+    } else {
+      proceedWithPayouts();
+    }
+  } else {
+    if (scatterCount >= FREE_SPIN_RETRIGGER) {
+      triggerBattalionSpins(false);
+      proceedWithPayouts();
+    } else if (scatterCount >= 6) {
+      triggerScatterTension(scatterCount);
+      proceedWithPayouts();
+    } else if (scatterCount > 0) {
+      flashScatterTransformation(matrix, () => {
+        transformScattersToTarget(matrix, scatterTargetSymbol);
+        updateGridDisplay(matrix);
+        proceedWithPayouts();
+      });
+    } else {
+      proceedWithPayouts();
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ⑪ UI-HILFSFUNKTIONEN
+// ═══════════════════════════════════════════════════════════════════════════
+
+function updateUI() {
+  document.getElementById('d-credits').textContent = `${formatAmount(credits)} ${currency}`;
+  document.getElementById('d-bet').textContent     = `${formatAmount(bet)} ${currency}`;
+  document.getElementById('d-spins').textContent   = spins;
+  document.getElementById('d-freespins').textContent = freeSpins;
+  localStorage.setItem('gamehub_credits', Math.max(0, credits));
+}
+
+function setTicker(msg) {
+  const t = document.getElementById('ticker');
+  t.classList.remove('flash');
+  void t.offsetWidth; 
+  t.textContent = msg;
+}
+
+function changeCurrency() {
+  currency = document.getElementById('sel-curr').value;
+  updateUI();
+  document.getElementById('d-win').textContent = `— ${currency}`;
+}
+
+function changeBet() {
+  bet = parseFloat(document.getElementById('sel-bet').value);
+  updateUI();
+}
+
+function applyCredits() {
+  const v = parseFloat(document.getElementById('inp-credits').value);
+  if (!isNaN(v) && v >= 0) {
+    credits = v; updateUI();
+    setTicker(`Guthaben auf ${formatAmount(v)} ${currency} gesetzt.`);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ⑫ AUTOPLAY
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Autoplay-Einstellungen (werden beim Start aus dem Modal gelesen)
+let autoPlayDelay      = 1200;   // ms Pause nach jedem Spin
+let autoPlayWinDelay   = 2000;   // ms Extra-Pause bei Gewinn
+let autoPlayStopWin    = 0;      // Stopp bei Einzelgewinn >= dieser Betrag (0 = aus)
+let autoPlayStopBal    = 0;      // Stopp wenn Guthaben < dieser Wert (0 = aus)
+let autoPlayConfirmBig = false;  // Bestätigung bei BIG WIN (≥5×)
+let autoPlayConfirmMeg = true;   // Bestätigung bei MEGA WIN+ (≥10×)
+let winConfirmPending  = false;  // Warte auf Nutzer-Bestätigung
+
+function toggleAutoPlay() {
+  if (autoPlayActive) {
+    stopAutoPlay();
+  } else {
+    openAutoplayModal();
+  }
+}
+
+function openAutoplayModal() {
+  document.getElementById('autoplay-modal').classList.remove('hidden');
+}
+
+function closeAutoplayModal() {
+  document.getElementById('autoplay-modal').classList.add('hidden');
+}
+
+function startAutoPlayFromModal() {
+  closeAutoplayModal();
+
+  const countVal = document.getElementById('ap-count').value;
+  autoPlayCount   = countVal === 'infinite' ? Infinity : parseInt(countVal, 10);
+  autoPlayDelay   = parseInt(document.getElementById('ap-delay').value, 10);
+  autoPlayWinDelay= parseInt(document.getElementById('ap-win-delay').value, 10);
+  autoPlayStopWin = parseFloat(document.getElementById('ap-stop-win').value) || 0;
+  autoPlayStopBal = parseFloat(document.getElementById('ap-stop-balance').value) || 0;
+  autoPlayConfirmBig = document.getElementById('ap-confirm-bigwin').checked;
+  autoPlayConfirmMeg = document.getElementById('ap-confirm-megawin').checked;
+
+  autoPlayActive = true;
+  winConfirmPending = false;
+
+  const btn = document.getElementById('btn-auto');
+  const label = autoPlayCount === Infinity ? '∞' : autoPlayCount;
+  btn.textContent = `Stop (${label})`;
+  btn.style.background = '#e74c3c';
+
+  if (!spinning) spin();
+}
+
+function stopAutoPlay() {
+  autoPlayActive = false;
+  autoPlayCount  = 0;
+  winConfirmPending = false;
+  const btn = document.getElementById('btn-auto');
+  if (btn) {
+    btn.textContent = 'Auto';
+    btn.style.background = 'var(--purple)';
+  }
+}
+
+// Wird nach jedem Spin aufgerufen um zu entscheiden ob/wann der nächste läuft
+function scheduleNextAutoSpin(lastWin) {
+  if (!autoPlayActive) return;
+
+  // Stop-Bedingungen prüfen
+  if (credits < bet && freeSpins <= 0) { stopAutoPlay(); return; }
+  if (autoPlayStopBal > 0 && credits < autoPlayStopBal) {
+    stopAutoPlay();
+    setTicker(`⛔ Autoplay gestoppt — Guthaben unter ${formatAmount(autoPlayStopBal)} ${currency}`);
+    return;
+  }
+  if (autoPlayStopWin > 0 && lastWin >= autoPlayStopWin) {
+    stopAutoPlay();
+    setTicker(`⛔ Autoplay gestoppt — Gewinn ${formatAmount(lastWin)} ${currency} erreichte Limit`);
+    return;
+  }
+
+  // Bestätigung bei großem Gewinn
+  const mult = bet > 0 ? lastWin / bet : 0;
+  const needConfirm = (autoPlayConfirmMeg && mult >= 10) || (autoPlayConfirmBig && mult >= 5 && mult < 10);
+  if (needConfirm && lastWin > 0) {
+    showWinConfirm(lastWin, mult);
+    return;
+  }
+
+  // Zähler nur dekrementieren wenn KEIN Free Spin läuft
+  if (freeSpins <= 0) {
+    if (autoPlayCount !== Infinity) {
+      autoPlayCount--;
+      const btn = document.getElementById('btn-auto');
+      if (btn) btn.textContent = `Stop (${autoPlayCount})`;
+    }
+    if (autoPlayCount <= 0 && autoPlayCount !== Infinity) { stopAutoPlay(); return; }
+  }
+
+  // Pause berechnen: Basisverzögerung + Extra-Pause bei Gewinn
+  const delay = autoPlayDelay + (lastWin > 0 ? autoPlayWinDelay : 0);
+  setTimeout(() => {
+    if (autoPlayActive && !spinning) spin();
+  }, delay);
+}
+
+function showWinConfirm(amount, mult) {
+  winConfirmPending = true;
+  const tier = winTier(amount);
+  const modal = document.getElementById('win-confirm-modal');
+  const tierLabel = document.getElementById('wc-tier-label');
+  const amountEl  = document.getElementById('wc-amount');
+  const multEl    = document.getElementById('wc-mult');
+
+  tierLabel.textContent = tier ? tier.label : 'GROSSER GEWINN';
+  tierLabel.className   = 'wc-tier-label' + (tier && tier.cls ? ' ' + tier.cls : '');
+  amountEl.textContent  = `+ ${formatAmount(amount)} ${currency}`;
+  multEl.textContent    = `× ${mult.toFixed(1)} Einsatz`;
+
+  modal.classList.remove('hidden');
+}
+
+function winConfirmContinue() {
+  document.getElementById('win-confirm-modal').classList.add('hidden');
+  winConfirmPending = false;
+
+  if (freeSpins <= 0) {
+    if (autoPlayCount !== Infinity) {
+      autoPlayCount--;
+      const btn = document.getElementById('btn-auto');
+      if (btn) btn.textContent = `Stop (${autoPlayCount})`;
+    }
+    if (autoPlayCount <= 0 && autoPlayCount !== Infinity) { stopAutoPlay(); return; }
+  }
+
+  setTimeout(() => {
+    if (autoPlayActive && !spinning) spin();
+  }, autoPlayDelay);
+}
+
+function winConfirmStop() {
+  document.getElementById('win-confirm-modal').classList.add('hidden');
+  stopAutoPlay();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ⑫ INIT
+// ═══════════════════════════════════════════════════════════════════════════
+
+window.onload = () => {
+  const saved = localStorage.getItem('gamehub_credits');
+  if (saved !== null && !isNaN(parseInt(saved))) credits = parseInt(saved);
+  buildGrid();
+  updateUI();
+  updateTensionUI();
+  toggleMusic();
+  startTensionDecay();
+  
+  document.addEventListener('keydown', (e) => {
+    const active = document.activeElement;
+    const tag = active ? active.tagName : '';
+    if ((e.code === 'Space' || e.key === ' ') && tag !== 'INPUT' && tag !== 'TEXTAREA' && !active.isContentEditable) {
+      e.preventDefault();
+      if (!spinning) spin();
+    }
+  });
+
+  const introSound = new Audio('music/Bismarck - Start(0).mp3');
+  introSound.play().catch(e => console.log("Autoplay hat gehakt:", e));
+
+};
+
+window.addEventListener('storage', e => {
+  if (e.key === 'gamehub_credits' && e.newValue !== null) {
+    credits = parseInt(e.newValue);
+    updateUI();
+  }
+});
+</script>
+</body>
+</html>

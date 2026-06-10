@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Hub</title>
+<style>
+*{box-sizing:border-box}
+body{
+margin:0;
+font-family:Segoe UI,Arial,sans-serif;
+background:radial-gradient(circle at top,#1a2740,#090b12 60%);
+color:white;
+overflow:hidden;
+}
+#menu{
+position:absolute; inset:0;
+display:flex; flex-direction:column;
+align-items:center; justify-content:center;
+background:
+linear-gradient(rgba(0,0,0,.35),rgba(0,0,0,.75)),
+radial-gradient(circle at 20% 20%,#f59e0b55,transparent 25%),
+radial-gradient(circle at 80% 30%,#3b82f655,transparent 25%),
+radial-gradient(circle at 50% 80%,#ef444455,transparent 25%),
+#05070c;
+}
+h1{
+font-size:clamp(2.5rem,6vw,5rem);
+letter-spacing:.15em;
+text-transform:uppercase;
+text-shadow:0 0 20px #f59e0b;
+margin-bottom:40px;
+}
+.grid{display:flex;gap:30px;flex-wrap:wrap;justify-content:center}
+.card{
+width:320px;padding:28px;border-radius:24px;
+background:rgba(255,255,255,.08);
+backdrop-filter:blur(12px);
+border:1px solid rgba(255,255,255,.15);
+box-shadow:0 0 30px rgba(0,0,0,.4);
+cursor:pointer;transition:.3s;
+}
+.card:hover{transform:translateY(-10px) scale(1.03);box-shadow:0 0 40px rgba(245,158,11,.45)}
+.card h2{margin-top:0}
+.card p{opacity:.85}
+button{
+padding:12px 22px;border:none;border-radius:999px;
+font-weight:bold;cursor:pointer;
+background:linear-gradient(90deg,#f59e0b,#facc15);
+}
+iframe{
+display:none;border:none;width:100vw;height:100vh;
+}
+#back{
+display:none;position:fixed;top:15px;left:15px;z-index:9999;
+}
+
+#confirm-overlay{
+display:none;position:fixed;inset:0;z-index:99999;
+background:rgba(0,0,0,.65);backdrop-filter:blur(6px);
+align-items:center;justify-content:center;
+}
+#confirm-overlay.visible{display:flex;}
+#confirm-box{
+background:linear-gradient(145deg,#1e293b,#0f172a);
+border:1px solid rgba(245,158,11,.4);
+border-radius:20px;padding:36px 42px;text-align:center;
+box-shadow:0 0 60px rgba(0,0,0,.7), 0 0 20px rgba(245,158,11,.15);
+max-width:340px;width:90%;
+animation:popIn .2s cubic-bezier(.175,.885,.32,1.275) forwards;
+}
+@keyframes popIn{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+#confirm-box h3{margin:0 0 10px;font-size:1.4rem;color:#f59e0b;}
+#confirm-box p{margin:0 0 28px;opacity:.8;font-size:.95rem;line-height:1.5;}
+.confirm-btns{display:flex;gap:14px;justify-content:center;}
+.confirm-btns button{padding:10px 26px;font-size:.95rem;}
+#btn-confirm-yes{background:linear-gradient(90deg,#ef4444,#dc2626);color:white;}
+#btn-confirm-no{background:rgba(255,255,255,.1);color:white;border:1px solid rgba(255,255,255,.2);}
+#btn-confirm-no:hover{background:rgba(255,255,255,.18);}
+
+/* ── GLOBALES GELD-SYSTEM ── */
+#hub-balance-bar{
+  display:flex;align-items:center;gap:16px;
+  background:rgba(245,158,11,0.12);
+  border:1px solid rgba(245,158,11,0.35);
+  border-radius:50px;padding:10px 28px;
+  margin-bottom:28px;font-size:1.05rem;color:#fde68a;
+}
+#hub-credits-display{font-weight:800;font-size:1.3rem;color:#f59e0b;min-width:80px;text-align:center;}
+#hub-manage-btn{
+  background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.4);
+  color:#f59e0b;padding:6px 16px;border-radius:20px;
+  font-weight:700;cursor:pointer;font-size:0.9rem;transition:.2s;
+}
+#hub-manage-btn:hover{background:rgba(245,158,11,0.3);}
+#balance-modal{
+  display:none;position:fixed;inset:0;z-index:99998;
+  background:rgba(0,0,0,.72);backdrop-filter:blur(8px);
+  align-items:center;justify-content:center;
+}
+#balance-modal.visible{display:flex;}
+#balance-modal-box{
+  background:linear-gradient(145deg,#1e293b,#0f172a);
+  border:1px solid rgba(245,158,11,.5);border-radius:20px;
+  padding:36px 42px;text-align:center;
+  box-shadow:0 0 60px rgba(0,0,0,.7),0 0 20px rgba(245,158,11,.2);
+  max-width:360px;width:90%;
+  animation:popIn .2s cubic-bezier(.175,.885,.32,1.275) forwards;
+}
+#balance-modal-box h3{margin:0 0 8px;font-size:1.5rem;color:#f59e0b;}
+#balance-modal-box p{margin:0 0 22px;opacity:.75;font-size:.9rem;line-height:1.5;}
+#hub-balance-input{
+  width:100%;padding:10px;font-size:1.3rem;text-align:center;
+  background:#0f172a;border:1px solid rgba(245,158,11,.4);
+  color:#fff;border-radius:8px;margin-bottom:18px;box-sizing:border-box;
+}
+.balance-btn-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+.balance-btn-row button{padding:10px 20px;font-size:.9rem;}
+#btn-balance-reset{background:rgba(255,255,255,.1);color:white;border:1px solid rgba(255,255,255,.2);}
+#btn-balance-reset:hover{background:rgba(255,255,255,.18);}
+#btn-balance-close{background:rgba(100,116,139,.4);color:#94a3b8;border:1px solid #475569;}
+#btn-balance-close:hover{background:rgba(100,116,139,.6);color:#fff;}
+</style>
+</head>
+<body>
+<div id="menu">
+<h1>Arcade Game Hub</h1>
+<div id="hub-balance-bar">
+  <span>💰 Guthaben</span>
+  <strong id="hub-credits-display">…</strong>
+  <button id="hub-manage-btn" onclick="openBalanceModal()">⚙️ Einstellen</button>
+</div>
+<div class="grid">
+<div class="card" onclick="loadGame('sabaton-slots.html')">
+<h2>🎰 Sabaton Slots</h2>
+<p>Heavy-Metal Slotmachine mit atmosphärischem Design.</p>
+<button>Spiel starten</button>
+</div>
+<div class="card" onclick="loadGame('flip7v0.3.3.html')">
+<h2>🃏 Flip 7</h2>
+<p>Kartenspiel mit moderner Oberfläche und Spielmechanik.</p>
+<button>Spiel starten</button>
+</div>
+</div>
+</div>
+
+<button id="back" onclick="askConfirm()">⬅ Zurück zum Menü</button>
+<iframe id="gameFrame" allow="autoplay"></iframe>
+
+<div id="confirm-overlay">
+  <div id="confirm-box">
+    <h3>⚠ Spiel verlassen?</h3>
+    <p>Bist du sicher?<br>Der aktuelle Spielstand geht verloren.</p>
+    <div class="confirm-btns">
+      <button id="btn-confirm-yes" onclick="confirmYes()">Ja, zurück</button>
+      <button id="btn-confirm-no" onclick="confirmNo()">Weiter spielen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function loadGame(file){
+ document.getElementById('menu').style.display='none';
+ document.getElementById('back').style.display='block';
+ const f=document.getElementById('gameFrame');
+ f.style.display='block';
+ f.src=file;
+}
+function askConfirm(){
+  document.getElementById('confirm-overlay').classList.add('visible');
+}
+function confirmYes(){
+  document.getElementById('confirm-overlay').classList.remove('visible');
+  showMenu();
+  refreshHubDisplay();
+}
+function confirmNo(){
+  document.getElementById('confirm-overlay').classList.remove('visible');
+}
+function showMenu(){
+ document.getElementById('gameFrame').style.display='none';
+ document.getElementById('gameFrame').src='';
+ document.getElementById('back').style.display='none';
+ document.getElementById('menu').style.display='flex';
+ refreshHubDisplay();
+}
+
+// ── GLOBALES GELD-SYSTEM ──
+const HUB_KEY = 'gamehub_credits';
+const HUB_DEFAULT = 50;
+
+function getHubCredits() {
+  const v = localStorage.getItem(HUB_KEY);
+  const n = v !== null ? parseFloat(v) : null;
+  return Number.isFinite(n) ? n : null;
+}
+function setHubCredits(n) {
+  const value = Math.max(0, Number(n) || 0);
+  localStorage.setItem(HUB_KEY, value.toFixed(2));
+  refreshHubDisplay();
+}
+function refreshHubDisplay() {
+  const el = document.getElementById('hub-credits-display');
+  const value = getHubCredits() ?? HUB_DEFAULT;
+  if (el) el.textContent = `${value.toFixed(2).replace('.', ',')} 🪙`;
+}
+function openBalanceModal() {
+  document.getElementById('hub-balance-input').value = getHubCredits() ?? HUB_DEFAULT;
+  document.getElementById('balance-modal').classList.add('visible');
+}
+function closeBalanceModal() {
+  document.getElementById('balance-modal').classList.remove('visible');
+}
+function applyHubBalance() {
+  const v = parseFloat(document.getElementById('hub-balance-input').value);
+  if (!Number.isNaN(v) && v >= 0) { setHubCredits(v); closeBalanceModal(); }
+}
+function resetHubBalance() {
+  setHubCredits(HUB_DEFAULT);
+  document.getElementById('hub-balance-input').value = HUB_DEFAULT;
+  closeBalanceModal();
+}
+document.addEventListener('DOMContentLoaded', () => {
+  if (getHubCredits() === null) { setHubCredits(HUB_DEFAULT); openBalanceModal(); }
+  else refreshHubDisplay();
+  setInterval(refreshHubDisplay, 900);
+  window.addEventListener('storage', refreshHubDisplay);
+});
+</script>
+
+<div id="balance-modal">
+  <div id="balance-modal-box">
+    <h3>💰 Guthaben einstellen</h3>
+    <p>Lege dein Startguthaben fest.<br>Es gilt spielübergreifend für alle Games im Hub.</p>
+    <input type="number" id="hub-balance-input" min="0" max="999999" value="50">
+    <div class="balance-btn-row">
+      <button onclick="applyHubBalance()">💾 Speichern</button>
+      <button id="btn-balance-reset" onclick="resetHubBalance()">🔄 Reset (50)</button>
+      <button id="btn-balance-close" onclick="closeBalanceModal()">✕ Schließen</button>
+    </div>
+  </div>
+</div>
+
+<div style="margin:8px 0;padding:8px;border:1px solid #666;border-radius:6px">
+<label>
+<input type="checkbox" id="videoWaitMode">
+Timer ignorieren und bei Videoende weiter
+</label>
+</div>
+
+<script>
+window.videoWaitMode=false;
+document.addEventListener('DOMContentLoaded',()=>{
+ const cb=document.getElementById('videoWaitMode');
+ if(cb){
+   cb.addEventListener('change',()=>window.videoWaitMode=cb.checked);
+ }
+});
+
+window.handleSlideAdvance=function(videoEl,nextSlideFn,timerFn){
+ if(window.videoWaitMode && videoEl){
+   videoEl.onended=()=>nextSlideFn && nextSlideFn();
+ }else{
+   timerFn && timerFn();
+ }
+};
+</script>
+</body>
+</html>
