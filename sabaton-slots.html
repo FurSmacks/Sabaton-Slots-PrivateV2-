@@ -28,7 +28,7 @@
       background-size: cover, cover; /* Beides auf cover stellen verhindert das Verzerren */
       background-position: center top, center center; /* Richtet das obere Bild optimal aus */
       background-repeat: no-repeat;
-      background-attachment: fixed; /* Sorgt dafür, dass der Hintergrund beim Scrollen stabil bleibt */
+      background-attachment: fixed; /* Desktop: stabil beim Scrollen; auf iOS per @media überschrieben */
       color: var(--text);
       font-family: 'Oswald', 'Impact', sans-serif;
       display: flex;
@@ -953,6 +953,151 @@
     .wc-btn:hover { filter: brightness(1.15); }
     .wc-btn-continue { background: var(--gold); color: #000; }
     .wc-btn-stop     { background: #1e2a35; color: #e74c3c; border: 1px solid #e74c3c; }
+
+    /* ══════════════════════════════════════════════════
+       MOBILE RESPONSIVE — Smartphone-Optimierungen
+       ══════════════════════════════════════════════════ */
+
+    /* Tablets (≤ 900px) */
+    @media (max-width: 900px) {
+      .machine { padding: 12px; }
+      .reel { width: 130px; }
+      .cell { width: 126px; height: 126px; }
+    }
+
+    /* Große Smartphones / kleine Tablets (≤ 640px) */
+    @media (max-width: 640px) {
+      body {
+        padding: 8px;
+        gap: 8px;
+        /* iOS Safari: fixed background oft buggy — scroll stattdessen */
+        background-attachment: scroll;
+      }
+
+      /* Logo kleiner */
+      .logo-wrap { margin-bottom: 0; }
+      .logo-img { width: min(320px, 88%); }
+      .logo-sub { font-size: 0.65rem; letter-spacing: 3px; }
+
+      /* Machine: weniger Abstand nach oben */
+      .machine {
+        margin-top: 60px;
+        padding: 10px 8px;
+      }
+
+      /* Reels skalieren mit Viewport */
+      .reels-wrap { gap: 0; padding: 8px; }
+      .reel { width: calc((100vw - 64px) / 5); min-width: 50px; }
+      .cell {
+        width: calc((100vw - 64px) / 5);
+        height: calc((100vw - 64px) / 5);
+        min-width: 50px;
+        min-height: 50px;
+        border-width: 1px;
+        border-radius: 3px;
+      }
+
+      /* Dashboard: 3-2 Layout statt 6 Spalten */
+      .dashboard {
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: auto auto;
+        gap: 6px;
+      }
+      /* Spin-Wrap über volle Breite in zweiter Reihe */
+      .spin-wrap {
+        grid-column: 1 / -1;
+        gap: 8px;
+      }
+      .btn-spin {
+        font-size: 1.4rem;
+        padding: 14px 16px;
+        min-height: 56px;
+        letter-spacing: 3px;
+      }
+      #btn-auto {
+        min-height: 56px !important;
+        padding: 12px 16px !important;
+        font-size: 1rem !important;
+      }
+
+      .stat { padding: 8px 6px; }
+      .stat-label { font-size: 0.6rem; letter-spacing: 1.5px; }
+      .stat-val { font-size: 1.1rem; }
+
+      /* Ticker */
+      .ticker { font-size: 0.82rem; padding: 9px 12px; letter-spacing: 1px; }
+
+      /* Auszahlungstabelle: kompakter */
+      .paytable { gap: 7px 12px; padding: 8px 10px; }
+      .pay-row { font-size: 0.66rem; gap: 4px; }
+
+      /* Musik-Bar */
+      .music-bar { gap: 8px; padding: 7px 10px; font-size: 0.74rem; }
+      #vol-slider { width: 55px; }
+
+      /* Tension Bar */
+      .tension-bar { padding: 7px 10px; gap: 8px; }
+      .tension-lamp { width: 11px; height: 11px; }
+
+      /* Admin-Leiste */
+      .admin { gap: 8px; padding: 8px 10px; font-size: 0.78rem; }
+
+      /* Win-Popup Schriftgrößen verkleinern */
+      .win-popup .wp-title { font-size: 3.2rem !important; letter-spacing: 6px; }
+      .win-popup.tier-mega .wp-title  { font-size: 3.6rem !important; }
+      .win-popup.tier-epic .wp-title  { font-size: 4rem !important; }
+      .win-popup.tier-jackpot .wp-title { font-size: 4.4rem !important; letter-spacing: 8px; }
+      .win-popup .wp-amount { font-size: 2rem; }
+
+      /* Battalion Summary Card */
+      .bs-card { padding: 26px 22px; }
+      .bs-card h2 { font-size: 1.6rem; letter-spacing: 5px; }
+      .bs-card .bs-amount { font-size: 2.6rem; }
+
+      /* Scatter Counter */
+      .sco-count { font-size: 6rem; }
+      .sco-label { font-size: 1.1rem; letter-spacing: 8px; }
+
+      /* Modals */
+      .ap-card { padding: 20px 16px 16px; }
+      .wc-card { padding: 24px 20px 20px; }
+      .wc-amount { font-size: 2rem; }
+      .wc-tier-label { font-size: 1.7rem; letter-spacing: 5px; }
+
+      /* Battalion Confirm */
+      .battalion-confirm-card { padding: 16px 14px 12px; }
+
+      /* Banner-Text */
+      #battalion-banner .banner-text { font-size: 2.4rem; letter-spacing: 5px; }
+
+      /* Freespin-Badge */
+      #freespin-badge { top: -10px; right: -10px; width: 26px; height: 26px; font-size: 0.82rem; line-height: 26px; }
+    }
+
+    /* Sehr kleine Smartphones (≤ 380px, z.B. iPhone SE) */
+    @media (max-width: 380px) {
+      .machine { margin-top: 44px; padding: 8px 6px; }
+      .reel { width: calc((100vw - 52px) / 5); }
+      .cell {
+        width: calc((100vw - 52px) / 5);
+        height: calc((100vw - 52px) / 5);
+      }
+      .win-popup .wp-title { font-size: 2.6rem !important; }
+      .win-popup .wp-amount { font-size: 1.6rem; }
+      .logo-img { width: min(260px, 88%); }
+    }
+
+    /* Touch-Geräte: hover-Effekte deaktivieren für besseres Feeling */
+    @media (hover: none) and (pointer: coarse) {
+      .btn-spin:hover { transform: none; }
+      .admin button:hover { background: #1e2a35; color: var(--gold); }
+      .btn-music:hover { background: #10181f; color: var(--gold); }
+      .bs-card .bs-close:hover { background: #1e2a35; color: #d4a017; }
+      /* Größere Touch-Targets für alle Buttons */
+      .btn-spin { min-height: 56px; touch-action: manipulation; }
+      #btn-auto { touch-action: manipulation; }
+      .ap-btn, .wc-btn, .bs-card .bs-close { min-height: 48px; touch-action: manipulation; }
+    }
   </style>
 </head>
 <body>
