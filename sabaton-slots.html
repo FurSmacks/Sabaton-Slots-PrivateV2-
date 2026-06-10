@@ -25,9 +25,10 @@
       background-image:
         url('menu-bg.jpg'),
         url('basegame-bg.jpg');
-      background-size: 100% 100%, cover;
-      background-position: center 12%, center center;
+      background-size: cover, cover; /* Beides auf cover stellen verhindert das Verzerren */
+      background-position: center top, center center; /* Richtet das obere Bild optimal aus */
       background-repeat: no-repeat;
+      background-attachment: fixed; /* Sorgt dafür, dass der Hintergrund beim Scrollen stabil bleibt */
       color: var(--text);
       font-family: 'Oswald', 'Impact', sans-serif;
       display: flex;
